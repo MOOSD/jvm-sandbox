@@ -16,9 +16,46 @@
         <maven.install.skip>true</maven.install.skip>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-loader</artifactId>
+            <version>2.3.8.RELEASE</version>
+        </dependency>
+    </dependencies>
+
     <build>
         <finalName>sandbox-agent-${project.version}</finalName>
+
         <plugins>
+            <!-- 运行anturn -->
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                            <target>
+                                <mkdir dir="target/lib"/>
+                                <copy todir="target/lib" flatten="true">
+                                    <fileset dir="../sandbox-core" includes="**/*.jar"/>
+                                </copy>
+
+                                <mkdir dir="target/module"/>
+                                <copy todir="target/module" flatten="true">
+                                    <fileset dir="../sandbox-debug-module" includes="**/*.jar"/>
+                                </copy>
+
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- 指定打包的manifest文件信息 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -29,6 +66,9 @@
                         </goals>
                         <phase>package</phase>
                         <configuration>
+<!--                            <descriptors>-->
+<!--                                <descriptor>src/assembly/src.xml</descriptor>-->
+<!--                            </descriptors>-->
                             <descriptorRefs>
                                 <descriptorRef>jar-with-dependencies</descriptorRef>
                             </descriptorRefs>
@@ -41,10 +81,38 @@
                                     <Can-Set-Native-Method-Prefix>true</Can-Set-Native-Method-Prefix>
                                 </manifestEntries>
                             </archive>
+                            <!-- 取消打包时候对模块的压缩 -->
+                            <archiverConfig>
+                                <compress>false</compress>
+                            </archiverConfig>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
+            <!-- 对此项目引入的依赖进行shade -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <configuration>
+                    <minimizeJar>true</minimizeJar>
+                    <relocations>
+                        <relocation>
+                            <pattern>org.springframework</pattern>
+                            <shadedPattern>spring</shadedPattern>
+                        </relocation>
+                    </relocations>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
 
