@@ -30,10 +30,23 @@
 
     <properties>
         <modules.temp.path>${project.build.directory}/module</modules.temp.path>
+        <core.temp.path>${project.build.directory}/core</core.temp.path>
+        <spy.temp.path>${project.build.directory}/spy</spy.temp.path>
+        <agent.finalName>hawkeye-agent-${project.version}</agent.finalName>
     </properties>
 
     <build>
         <plugins>
+            <!-- 取消主jar包的生成 -->
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-jar</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
             <!-- 汇总所有的module -->
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
@@ -50,6 +63,15 @@
                                 <copy todir="${modules.temp.path}" flatten="true">
                                     <fileset dir="../sandbox-module-starter" includes="**/*.jar"/>
                                 </copy>
+                                <mkdir dir="${core.temp.path}"/>
+                                <copy todir="${core.temp.path}" flatten="true">
+                                    <fileset dir="../sandbox-core" includes="**/sandbox-core*.jar"/>
+                                </copy>
+
+                                <mkdir dir="${spy.temp.path}"/>
+                                <copy todir="${spy.temp.path}" flatten="true">
+                                    <fileset dir="../sandbox-spy" includes="**/sandbox-spy*.jar"/>
+                                </copy>
                             </target>
                         </configuration>
                     </execution>
@@ -61,11 +83,12 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
                     <execution>
+                        <phase>package</phase>
                         <goals>
                             <goal>attached</goal>
                         </goals>
-                        <phase>package</phase>
                         <configuration>
+                            <finalName>${agent.finalName}</finalName>
                             <descriptors>
                                 <descriptor>src/assembly/descriptor.xml</descriptor>
                             </descriptors>

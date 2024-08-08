@@ -1,6 +1,6 @@
 <assembly xmlns="http://maven.apache.org/ASSEMBLY/2.2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.2.0 https://maven.apache.org/xsd/assembly-2.2.0.xsd">
-    <id>dep</id>
+    <id>aio</id>
     <baseDirectory>/</baseDirectory>
 
     <!-- 指定打包格式为jar -->
@@ -16,6 +16,23 @@
             <includes>
                 <include>sandbox.properties</include>
                 <include>sandbox-logback.xml</include>
+            </includes>
+        </fileSet>
+
+        <!-- 添加core -->
+        <fileSet>
+            <directory>${core.temp.path}</directory>
+            <outputDirectory>core</outputDirectory>
+            <includes>
+                <include>*.jar</include>
+            </includes>
+        </fileSet>
+        <!-- 添加spy -->
+        <fileSet>
+            <directory>${spy.temp.path}</directory>
+            <outputDirectory>spy</outputDirectory>
+            <includes>
+                <include>*.jar</include>
             </includes>
         </fileSet>
 
@@ -42,22 +59,7 @@
             </includes>
             <unpack>true</unpack>
         </dependencySet>
-        <!--    添加core    -->
-        <dependencySet>
-            <outputDirectory>core</outputDirectory>
-            <includes>
-                <include>com.alibaba.jvm.sandbox:sandbox-core</include>
-            </includes>
-            <unpack>false</unpack>
-        </dependencySet>
-        <!-- 添加spy -->
-        <dependencySet>
-            <outputDirectory>spy</outputDirectory>
-            <includes>
-                <include>com.alibaba.jvm.sandbox:sandbox-spy</include>
-            </includes>
-            <unpack>false</unpack>
-        </dependencySet>
+
 
     </dependencySets>
 
