@@ -25,77 +25,15 @@
     </dependencies>
 
     <build>
-        <finalName>sandbox-agent-${project.version}</finalName>
-
         <plugins>
-            <!-- 运行anturn -->
-            <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>3.0.0</version>
-                <executions>
-                    <execution>
-                        <phase>prepare-package</phase>
-                        <configuration>
-                            <target>
-                                <mkdir dir="target/lib"/>
-                                <copy todir="target/lib" flatten="true">
-                                    <fileset dir="../sandbox-core" includes="**/*.jar"/>
-                                </copy>
-
-                                <mkdir dir="target/module"/>
-                                <copy todir="target/module" flatten="true">
-                                    <fileset dir="../sandbox-debug-module" includes="**/*.jar"/>
-                                </copy>
-
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- 指定打包的manifest文件信息 -->
+            <!-- 对主artifact进行shade -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>attached</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-<!--                            <descriptors>-->
-<!--                                <descriptor>src/assembly/src.xml</descriptor>-->
-<!--                            </descriptors>-->
-                            <descriptorRefs>
-                                <descriptorRef>jar-with-dependencies</descriptorRef>
-                            </descriptorRefs>
-                            <archive>
-                                <manifestEntries>
-                                    <Premain-Class>com.alibaba.jvm.sandbox.agent.AgentLauncher</Premain-Class>
-                                    <Agent-Class>com.alibaba.jvm.sandbox.agent.AgentLauncher</Agent-Class>
-                                    <Can-Redefine-Classes>true</Can-Redefine-Classes>
-                                    <Can-Retransform-Classes>true</Can-Retransform-Classes>
-                                    <Can-Set-Native-Method-Prefix>true</Can-Set-Native-Method-Prefix>
-                                </manifestEntries>
-                            </archive>
-                            <!-- 取消打包时候对模块的压缩 -->
-                            <archiverConfig>
-                                <compress>false</compress>
-                            </archiverConfig>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- 对此项目引入的依赖进行shade -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
+                    <artifactId>maven-shade-plugin</artifactId>
                 <version>3.2.4</version>
                 <configuration>
                     <minimizeJar>true</minimizeJar>
+                    <!-- agent用到的所有依赖进行重定向 -->
                     <relocations>
                         <relocation>
                             <pattern>org.springframework</pattern>

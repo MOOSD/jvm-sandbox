@@ -12,6 +12,12 @@
     <name>sandbox-module-starter ${sandbox.version}</name>
     <packaging>pom</packaging>
 
+
+    <modules>
+        <module>sandbox-debug-module</module>
+        <module>sandbox-mgr-module</module>
+    </modules>
+
     <build>
         <finalName>${project.name}-${project.version}</finalName>
         <plugins>

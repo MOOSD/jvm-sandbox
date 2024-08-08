@@ -7,7 +7,6 @@
         <groupId>com.alibaba.jvm.sandbox</groupId>
         <artifactId>sandbox-module-starter</artifactId>
         <version>1.4.0</version>
-        <relativePath>../sandbox-module-starter/pom.xml</relativePath>
     </parent>
     <artifactId>sandbox-mgr-module</artifactId>
     <name>sandbox-mgr-module ${sandbox.version}</name>
