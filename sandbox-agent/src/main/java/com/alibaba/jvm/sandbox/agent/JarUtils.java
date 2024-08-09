@@ -44,7 +44,8 @@ public class JarUtils {
         new PrivilegedAction<String>() {
             @Override
             public String run() {
-                return System.getProperty("java.io.tmpdir") + File.separatorChar + "easeagent" + File.separatorChar;
+                return System.getProperty("java.io.tmpdir") + File.separatorChar + "precision" +
+                        File.separatorChar + "agent" + File.separatorChar;
             }
         })
     );
@@ -105,15 +106,20 @@ public class JarUtils {
         }
 
         JarFile jarFile = new JarFile(agentJar);
+        // 查找entity
         JarEntry jarEntry = jarFile.getJarEntry(fileName);
         if (jarEntry == null) {
             return null;
         }
         try (InputStream input = jarFile.getInputStream(jarEntry)) {
-            File output = createTempJarFile(input, jarEntry.getName());
-            addToRootFileCache(fileName, output);
-            return output;
+            // 创建临时文件
+            File tempFile = createTempJarFile(input, jarEntry.getName());
+            jarFile.close();
+            // 添加至缓存
+            addToRootFileCache(fileName, tempFile);
+            return tempFile;
         }
+
     }
 
     public static void copy(InputStream input, OutputStream output) throws IOException {

@@ -6,7 +6,10 @@ import java.net.URL;
 
 
 public class CompoundableClassLoader extends LaunchedURLClassLoader{
-    public CompoundableClassLoader(URL[] urls, ClassLoader parent) {
-        super(urls, parent);
+    private final String toString;
+    public CompoundableClassLoader(String namespace, URL coreUrl, ClassLoader parent) {
+        super(new URL[]{coreUrl}, parent);
+        this.toString = String.format("SandboxClassLoader[namespace=%s;path=%s;]", namespace, coreUrl);
+
     }
 }

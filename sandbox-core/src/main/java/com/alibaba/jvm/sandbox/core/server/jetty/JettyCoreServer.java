@@ -175,10 +175,7 @@ public class JettyCoreServer implements CoreServer {
         this.cfg = cfg;
         try {
             initializer.initProcess(() -> {
-                LogbackUtils.init(
-                        cfg.getNamespace(),
-                        cfg.getCfgLibPath() + File.separator + "sandbox-logback.xml"
-                );
+                LogbackUtils.initByFile(cfg.getNamespace(),cfg.getLogBackFile());
                 logger.info("initializing server. cfg={}", cfg);
                 jvmSandbox = new JvmSandbox(cfg, inst);
                 initHttpServer();

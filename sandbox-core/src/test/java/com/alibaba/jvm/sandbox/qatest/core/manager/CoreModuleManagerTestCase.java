@@ -114,7 +114,7 @@ public class CoreModuleManagerTestCase {
         featureMap.put("system_module", System.getProperty("user.home"));
         return CoreConfigure.toConfigure(
                 new FeatureCodec(';', '=').toString(featureMap),
-                null
+                ""
         );
     }
 

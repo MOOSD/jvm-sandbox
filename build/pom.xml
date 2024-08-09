@@ -94,8 +94,8 @@
                             </descriptors>
                             <archive>
                                 <manifestEntries>
-                                    <Premain-Class>com.alibaba.jvm.sandbox.agent.AgentLauncher</Premain-Class>
-                                    <Agent-Class>com.alibaba.jvm.sandbox.agent.AgentLauncher</Agent-Class>
+                                    <Premain-Class>com.alibaba.jvm.sandbox.agent.AgentBoot</Premain-Class>
+                                    <Agent-Class>com.alibaba.jvm.sandbox.agent.AgentBoot</Agent-Class>
                                     <Can-Redefine-Classes>true</Can-Redefine-Classes>
                                     <Can-Retransform-Classes>true</Can-Retransform-Classes>
                                     <Can-Set-Native-Method-Prefix>true</Can-Set-Native-Method-Prefix>

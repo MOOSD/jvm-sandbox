@@ -24,6 +24,7 @@ public class CoreConfigure {
     private static final String DEFAULT_VAL_NAMESPACE = "default";
 
     private static final String KEY_SANDBOX_HOME = "sandbox_home";
+    private static final String LOGBACK_CONFIG_PATH = "logback_config_path";
     private static final String KEY_LAUNCH_MODE = "mode";
     private static final String KEY_SERVER_IP = "server.ip";
     private static final String KEY_SERVER_PORT = "server.port";
@@ -49,10 +50,20 @@ public class CoreConfigure {
 
     private final Map<String, String> featureMap = new LinkedHashMap<>();
 
+    private final File logBackFile;
+
     private CoreConfigure(final String featureString,
                           final String propertiesFilePath) {
         final Map<String, String> featureMap = toFeatureMap(featureString);
         final Map<String, String> propertiesMap = toPropertiesMap(propertiesFilePath);
+        logBackFile = null;
+        this.featureMap.putAll(merge(featureMap, propertiesMap));
+    }
+
+    private CoreConfigure(final String featureString, final Properties properties, final File logBackConfFile) {
+        final Map<String, String> featureMap = toFeatureMap(featureString);
+        final Map<String, String> propertiesMap = propertiesToMap(properties);
+        this.logBackFile = logBackConfFile;
         this.featureMap.putAll(merge(featureMap, propertiesMap));
     }
 
@@ -86,6 +97,16 @@ public class CoreConfigure {
             IOUtils.closeQuietly(is);
         }
 
+        // 转换为Map
+        for (String key : properties.stringPropertyNames()) {
+            propertiesMap.put(key, properties.getProperty(key));
+        }
+
+        return propertiesMap;
+    }
+
+    private Map<String, String> propertiesToMap(Properties properties) {
+        final Map<String, String> propertiesMap = new LinkedHashMap<>();
         // 转换为Map
         for (String key : properties.stringPropertyNames()) {
             propertiesMap.put(key, properties.getProperty(key));
@@ -133,6 +154,11 @@ public class CoreConfigure {
 
     public static CoreConfigure toConfigure(final String featureString, final String propertiesFilePath) {
         return instance = new CoreConfigure(featureString, propertiesFilePath);
+    }
+
+    public static CoreConfigure toConfigure(final String featureString, final Properties properties
+            , final File logBackConfFile) {
+        return instance = new CoreConfigure(featureString, properties, logBackConfFile);
     }
 
     public static CoreConfigure getInstance() {
@@ -238,6 +264,10 @@ public class CoreConfigure {
      */
     public String getCfgLibPath() {
         return featureMap.get(KEY_CFG_LIB_PATH);
+    }
+
+    public File getLogBackFile() {
+        return logBackFile;
     }
 
     @Override
