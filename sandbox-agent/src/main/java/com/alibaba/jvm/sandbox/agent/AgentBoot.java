@@ -13,38 +13,41 @@ import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.jar.JarFile;
 
+import static java.lang.String.format;
+
 public class AgentBoot {
 
     private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
     private static final String CORE_JAR_PATH = "core/";
     private static final String SPY_JAR_PATH = "spy/";
+    private static final String MODULE_JAR_PATH = "modules/";
     private static final String CORE_CONFIG_NAME = "sandbox.properties";
     private static final String LOG_CONFIG_NAME = "sandbox-logback.xml";
-
+    private static final String NAME_SPACE = "default";
     private static final String CLASS_OF_CORE_CONFIGURE = "com.alibaba.jvm.sandbox.core.CoreConfigure";
     private static final String CLASS_OF_PROXY_CORE_SERVER = "com.alibaba.jvm.sandbox.core.server.ProxyCoreServer";
 
     public static void premain(String featureString, Instrumentation inst) throws Exception {
         final File agentJar = getArchiveFileContains();
-
-
-
+        // 保险起见，清空临时目录
+        JarUtils.clearTempFilePath();
         // 获取Spring的启动类加载器
         final JarFileArchive archive = new JarFileArchive(agentJar);
         ArrayList<URL> urls = nestArchiveUrls(archive, CORE_JAR_PATH);
-        final ClassLoader classLoader = getClassLoader("default", urls.get(0));
+        final ClassLoader classLoader = getClassLoader(urls.get(0));
 
         // 获取Spy类,将Spy注入到BootstrapClassLoader
         final ArrayList<URL> spyUrl = nestArchiveUrls(archive, SPY_JAR_PATH);
         JarFile nestedJarFile = JarUtils.getNestedJarFile(spyUrl.get(0));
         inst.appendToBootstrapClassLoaderSearch(nestedJarFile);
 
-        // 获取配置文件，创建配置类 todo 支持命令行参数添加配置
-        Properties cfgProperties = getCoreConfigProperties(agentJar);
+        // 获取核心配置字符串 todo 支持命令行参数添加配置
+        final String coreFeatureString = getCoreFeatureString(agentJar);
+        Properties configProperties = getCoreConfigProperties(agentJar);
         File logConfigFile = getLogConfigFile(agentJar);
         final Class<?> classOfConfigure = classLoader.loadClass(CLASS_OF_CORE_CONFIGURE);
         final Object objectOfCoreConfigure = classOfConfigure.getMethod("toConfigure", String.class, Properties.class, File.class)
-                .invoke(null, null, cfgProperties, logConfigFile);
+                .invoke(null, coreFeatureString, configProperties, logConfigFile);
 
         // CoreServer类定义
         final Class<?> classOfProxyServer = classLoader.loadClass(CLASS_OF_PROXY_CORE_SERVER);
@@ -77,6 +80,31 @@ public class AgentBoot {
                 .invoke(objectOfProxyServer);
         System.out.println(socketAddress);
     }
+    private static String getCoreFeatureString(File agentJar) throws IOException {
+        String systemModulePath = JarUtils.getDirPath(agentJar, MODULE_JAR_PATH);
+
+        final String sandboxHome = JarUtils.getTempFilePath();
+        // todo 暂时取消SPI
+        String providerPath = "null";
+        // todo 暂时取消用户模块的加载
+        String userModulePath = "null";
+        final StringBuilder featureSB = new StringBuilder(
+                format(
+                        ";system_module=%s;mode=%s;sandbox_home=%s;user_module=%s;provider=%s;namespace=%s;",
+                        systemModulePath,
+                        // SANDBOX_MODULE_PATH,
+                        "agent",
+                        sandboxHome,
+                        // SANDBOX_HOME,
+                        userModulePath,
+                        providerPath,
+                        // SANDBOX_PROVIDER_LIB_PATH,
+                        NAME_SPACE
+                )
+        );
+        return featureSB.toString();
+    }
+
 
     private static File getLogConfigFile(File agentJar) throws IOException {
         return JarUtils.findFile(agentJar, LOG_CONFIG_NAME);
@@ -137,9 +165,9 @@ public class AgentBoot {
     /**
      * 获取ClassLoader
      */
-    private static synchronized ClassLoader getClassLoader(final String namespace, URL urls){
+    private static synchronized ClassLoader getClassLoader(URL urls){
         final CompoundableClassLoader classLoader;
-        classLoader = new CompoundableClassLoader(namespace, urls, BOOTSTRAP_CLASS_LOADER);
+        classLoader = new CompoundableClassLoader(urls, BOOTSTRAP_CLASS_LOADER);
         return classLoader;
     }
 

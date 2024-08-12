@@ -27,10 +27,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.Enumeration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
 
 public class JarUtils {
 
@@ -61,6 +63,16 @@ public class JarUtils {
     private static final String SEPARATOR = "!/";
     private static final String FILE_PROTOCOL = "file:";
 
+    /**
+     * 清除临时目录
+     */
+    public static void clearTempFilePath(){
+        deleteDirectory(TMP_FILE);
+    }
+
+    static String getTempFilePath(){
+        return TMP_FILE.getAbsolutePath();
+    }
     static JarFile getNestedJarFile(URL url) throws IOException {
         StringSequence spec = new StringSequence(url.getFile());
         Map<String, JarFile> cache = jarFileCache.get();
@@ -94,6 +106,21 @@ public class JarUtils {
         }
 
         return jarFile;
+    }
+    public static String getDirPath(File agentJar, String moduleJarPath) throws IOException {
+        try (JarFile jar = new JarFile(agentJar)) {
+            Enumeration<JarEntry> entries = jar.entries();
+            while (entries.hasMoreElements()) {
+                JarEntry jarEntry = entries.nextElement();
+                String jarEntryName = jarEntry.getName();
+                // 复制以指定路径开头的文件
+                if(jarEntryName.startsWith(moduleJarPath) && !jarEntry.isDirectory()){
+                    createTempJarFile(jar.getInputStream(jarEntry), jarEntryName);
+                }
+            }
+        }
+
+        return TMP_FILE.getAbsolutePath() + File.separatorChar + moduleJarPath;
     }
 
     static File findFile(File agentJar, String fileName) throws IOException {
@@ -211,5 +238,26 @@ public class JarUtils {
             fileCache = new SoftReference<>(cache);
         }
         cache.put(fileName, file);
+    }
+
+    public static void deleteDirectory(File directory) {
+        // 检查目录是否存在
+        if (directory.exists()) {
+            // 列出目录中的所有文件和子目录
+            File[] files = directory.listFiles();
+
+            if (files != null) {
+                // 递归删除所有文件和子目录
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        deleteDirectory(file); // 递归删除子目录
+                    } else {
+                        file.delete(); // 删除文件
+                    }
+                }
+            }
+            // 删除空目录
+            directory.delete();
+        }
     }
 }
