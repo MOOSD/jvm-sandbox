@@ -88,21 +88,18 @@ public class AgentBoot {
         String providerPath = "null";
         // todo 暂时取消用户模块的加载
         String userModulePath = "null";
-        final StringBuilder featureSB = new StringBuilder(
-                format(
-                        ";system_module=%s;mode=%s;sandbox_home=%s;user_module=%s;provider=%s;namespace=%s;",
-                        systemModulePath,
-                        // SANDBOX_MODULE_PATH,
-                        "agent",
-                        sandboxHome,
-                        // SANDBOX_HOME,
-                        userModulePath,
-                        providerPath,
-                        // SANDBOX_PROVIDER_LIB_PATH,
-                        NAME_SPACE
-                )
+        return format(
+                "system_module=%s;mode=%s;sandbox_home=%s;user_module=%s;provider=%s;namespace=%s;",
+                systemModulePath,
+                // SANDBOX_MODULE_PATH,
+                "agent",
+                sandboxHome,
+                // SANDBOX_HOME,
+                userModulePath,
+                providerPath,
+                // SANDBOX_PROVIDER_LIB_PATH,
+                NAME_SPACE
         );
-        return featureSB.toString();
     }
 
 

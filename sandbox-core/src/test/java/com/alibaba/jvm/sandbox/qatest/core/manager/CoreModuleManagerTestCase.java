@@ -165,6 +165,21 @@ public class CoreModuleManagerTestCase {
     }
 
     @Test
+    public void ModuleActiveTest() throws IOException, ModuleException {
+        // 获取目标模块目录下所有模块
+        File file = new File("C:\\Users\\77064\\AppData\\Local\\Temp\\baseJava\\modules");
+        if (!file.exists() || !file.isDirectory()) {
+            System.out.println("不存在");
+            return;
+        }
+        File[] files = file.listFiles((filedir, fileName) -> fileName.endsWith(".jar"));
+        System.out.println(Arrays.toString(files));
+        final CoreModuleManager coreModuleManager = buildingCoreModuleManager(files);
+        CoreModule coreModule = coreModuleManager.get("debug-trace");
+        coreModuleManager.active(coreModule);
+    }
+
+    @Test
     public void test$$CoreModuleManager$$ModuleLifeCycle() throws IOException, ModuleException {
         final CoreModuleManager coreModuleManager
                 = buildingCoreModuleManager(
