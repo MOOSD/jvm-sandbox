@@ -17,6 +17,7 @@
         <module>sandbox-debug-module</module>
         <module>sandbox-mgr-module</module>
         <module>sandbox-trace-module</module>
+        <module>sandbox-coverage-module</module>
     </modules>
 
     <build>

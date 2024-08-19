@@ -231,6 +231,15 @@ public class EventWeaver extends ClassVisitor implements Opcodes, AsmTypes, AsmM
 
             }
 
+            @Override
+            public void visitJumpInsn(int opcode, Label label) {
+                super.visitJumpInsn(opcode, label);
+                // todo 分支覆盖相关代码
+//                if (opcode == Opcodes.IFNE || opcode == Opcodes.IFEQ || opcode == Opcodes.IFLT || opcode == Opcodes.IFGE || opcode == Opcodes.IFGT || opcode == Opcodes.IFLE) {
+//                    System.out.println("Found an if statement");
+//                }
+            }
+
             /**
              * 是否抛出异常返回(通过字节码判断)
              *
