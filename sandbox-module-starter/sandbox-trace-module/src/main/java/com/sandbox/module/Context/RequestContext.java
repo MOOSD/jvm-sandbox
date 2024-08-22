@@ -4,10 +4,16 @@ public class RequestContext {
 
     private String traceId;
 
+    private String spanId;
     private String message;
 
-    public RequestContext(String traceId, String message) {
+    public RequestContext(String traceId, String spanId, String message) {
         this.traceId = traceId;
+        if(spanId != null){
+            this.spanId = spanId + ".0";
+        } else {
+            this.spanId = "0";
+        }
         this.message = message;
     }
 
@@ -17,6 +23,14 @@ public class RequestContext {
 
     public void setTraceId(String traceId) {
         this.traceId = traceId;
+    }
+
+    public String getSpanId() {
+        return spanId;
+    }
+
+    public void setSpanId(String spanId) {
+        this.spanId = spanId;
     }
 
     public String getMessage() {
@@ -31,6 +45,7 @@ public class RequestContext {
     public String toString() {
         return "RequestContext{" +
                 "traceId='" + traceId + '\'' +
+                ", spanId='" + spanId + '\'' +
                 ", message='" + message + '\'' +
                 '}';
     }

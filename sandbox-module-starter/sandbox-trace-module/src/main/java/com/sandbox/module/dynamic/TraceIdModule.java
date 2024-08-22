@@ -26,7 +26,7 @@ public class TraceIdModule implements Module, LoadCompleted {
     @Resource
     private ModuleEventWatcher moduleEventWatcher;
 
-    private final Logger logger = LoggerFactory.getLogger("TRACE-ID");
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
      final static TransmittableThreadLocal<String> traceIdThreadLocal = new TransmittableThreadLocal<>();
     final static TransmittableThreadLocal<RequestContext> requestTtl = new TransmittableThreadLocal<>();
@@ -79,7 +79,7 @@ public class TraceIdModule implements Module, LoadCompleted {
                         if(Objects.isNull(headerList)){
                             String uuid = UUID.randomUUID().toString();
 
-                            RequestContext requestContext = new RequestContext(uuid, "(String) agent");
+                            RequestContext requestContext = new RequestContext(uuid, null, "(String) agent");
                             traceIdThreadLocal.set(uuid);
                             requestTtl.set(requestContext);
 
@@ -141,6 +141,7 @@ public class TraceIdModule implements Module, LoadCompleted {
                         Object requestObj = advice.getParameterArray()[0];
                         Object headerTraceId = getHeader(requestObj, LinkConstant.TRACE_ID);
                         Object headerTraceIdByStr = getHeader(requestObj, "traceId");
+                        Object headerSpanId = getHeader(requestObj, LinkConstant.SPAN_ID);
                         System.out.println("headerTraceId: " + headerTraceId);
                         System.out.println("headerTraceIdByStr = " + headerTraceIdByStr);
                         System.out.println("headerTraceId is NULL: " + (headerTraceId == null));
@@ -148,7 +149,7 @@ public class TraceIdModule implements Module, LoadCompleted {
 
                         if(headerTraceId != null){
                             traceIdThreadLocal.set((String) headerTraceId);
-                            RequestContext requestContext = new RequestContext((String) headerTraceId, (String) getHeader(requestObj, "User-Agent"));
+                            RequestContext requestContext = new RequestContext((String) headerTraceId, (String) headerSpanId, (String) getHeader(requestObj, "User-Agent"));
                             requestTtl.set(requestContext);
                             setAttribute(requestObj, LinkConstant.TRACE_ID, getThreadLocalValue());
                             System.out.println("11111");
@@ -156,7 +157,7 @@ public class TraceIdModule implements Module, LoadCompleted {
 
                         if(traceIdThreadLocal.get() == null){
                             String uuid = UUID.randomUUID().toString();
-                            RequestContext requestContext = new RequestContext(uuid, (String) getHeader(requestObj, "User-Agent"));
+                            RequestContext requestContext = new RequestContext(uuid, null, (String) getHeader(requestObj, "User-Agent"));
                             traceIdThreadLocal.set(uuid);
                             requestTtl.set(requestContext);
                             String requestURI = (String) getMethod(requestObj, "getRequestURI").invoke(requestObj);
@@ -214,6 +215,7 @@ public class TraceIdModule implements Module, LoadCompleted {
 
                         System.out.println("traceIdThreadLocal: " + traceIdThreadLocal.get());
                         header(o, LinkConstant.TRACE_ID, traceIdThreadLocal.get());
+                        header(o, LinkConstant.SPAN_ID, requestTtl.get().getSpanId());
                         System.out.println("headers(o) = " + headers(o));
                         System.out.println("+++++++++++++++++++++++++++++++++++++++=");
                     }
