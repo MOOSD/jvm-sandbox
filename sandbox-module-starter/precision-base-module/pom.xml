@@ -7,9 +7,7 @@
         <version>1.4.0</version>
     </parent>
     <groupId>cn.newgrand.ck</groupId>
-    <artifactId>sandbox-coverage-module</artifactId>
-    <name>sandbox-coverage-module</name>
-
+    <artifactId>precision-base-module</artifactId>
 
 
     <dependencies>
@@ -18,25 +16,25 @@
             <artifactId>slf4j-api</artifactId>
             <version>1.7.24</version>
         </dependency>
+
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.2.1</version>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.17.2</version>
         </dependency>
 
         <dependency>
-            <groupId>cn.newgrand.ck</groupId>
-            <artifactId>precision-base-module</artifactId>
-            <version>1.4.0</version>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.13</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.jctools</groupId>
+            <artifactId>jctools-core</artifactId>
+            <version>4.0.3</version>
+        </dependency>
+
     </dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
 </project>

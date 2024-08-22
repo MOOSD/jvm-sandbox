@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <configuration scan="true" scanPeriod="10000">
 
-    <!-- DEBUG模块：Servlet监控日志 -->
-    <logger name="CODE-COVERAGE" level="INFO">
+    <!-- 给与根节点Appender -->
+    <logger level="INFO">
         <appender class="ch.qos.logback.core.rolling.RollingFileAppender">
-            <file>${user.home}/logs/sandbox/debug/code-coverage.log</file>
+            <file>${user.home}/logs/sandbox/precision/code-coverage-module.log</file>
             <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-                <FileNamePattern>${user.home}/logs/sandbox/debug/code-coverage.log.%d{yyyy-MM-dd}</FileNamePattern>
+                <FileNamePattern>${user.home}/logs/sandbox/precision/code-coverage-module.log.%d{yyyy-MM-dd}</FileNamePattern>
                 <MaxHistory>30</MaxHistory>
             </rollingPolicy>
             <encoder>
@@ -15,5 +15,6 @@
             </encoder>
         </appender>
     </logger>
+
 
 </configuration>

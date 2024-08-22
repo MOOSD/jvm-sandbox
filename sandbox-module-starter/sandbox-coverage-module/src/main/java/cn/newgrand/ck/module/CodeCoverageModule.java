@@ -1,7 +1,8 @@
-package cn.newgrand.ck;
+package cn.newgrand.ck.module;
 
 
 
+import cn.newgrand.ck.pojo.MethodCoverage;
 import com.alibaba.jvm.sandbox.api.Information;
 import com.alibaba.jvm.sandbox.api.LoadCompleted;
 import com.alibaba.jvm.sandbox.api.Module;
@@ -14,24 +15,41 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
-import java.util.Objects;
+import java.util.*;
 
 @MetaInfServices(Module.class)
 @Information(id = "code-coverage", version = "0.0.1")
 public class CodeCoverageModule implements Module, LoadCompleted {
-    private final Logger log = LoggerFactory.getLogger("CODE-COVERAGE");
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
     @Resource
     private ModuleEventWatcher moduleEventWatcher;
 
+    /**
+     * 按照方法级别手机覆盖率信息
+     */
     @Override
     public void loadCompleted() {
-        log.info("类加载器1：{},类加载器2：{}",log.getClass().getClassLoader().toString(),moduleEventWatcher.toString());
-
-        //新建一个AdviceListener
+        log.info("类加载器1：{},类加载器2：{}",log.getClass().getClassLoader().toString(), moduleEventWatcher.toString());
         AdviceListener adviceListener = new AdviceListener() {
+            final Map<String, MethodCoverage> coverageInfo = new LinkedHashMap<>();
+
+            @Override
+            protected void before(Advice advice) throws Throwable {
+                advice.attach(new MethodCoverage());
+                super.before(advice);
+
+            }
+
+            @Override
+            protected void after(Advice advice) throws Throwable {
+                super.after(advice);
+
+            }
+
             @Override
             protected void beforeLine(Advice advice, int lineNum) {
                 beforeLineHandle(advice, lineNum);//最重要的处理过程
+
             }
         };
 
@@ -49,6 +67,8 @@ public class CodeCoverageModule implements Module, LoadCompleted {
 
 
     private void beforeLineHandle(Advice advice, int lineNum) {
+        // 获取方法覆盖率信息
+
 
         //当前触发事件信息
         String currentBehavior = advice.getBehavior().getName();

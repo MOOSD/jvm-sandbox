@@ -46,26 +46,7 @@ public class LogbackUtils {
         }
     }
 
-    public static void initByFile(final String namespace,
-                            final File logbackCfgFile) {
-        final LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        final JoranConfigurator configurator = new JoranConfigurator();
-        configurator.setContext(loggerContext);
-        loggerContext.reset();
-        InputStream is = null;
-        final Logger logger = LoggerFactory.getLogger(LoggerFactory.class);
-        try {
-            is = new FileInputStream(logbackCfgFile);
-            initNamespaceConvert(namespace);
-            configurator.doConfigure(is);
-            logger.info(SandboxStringUtils.getLogo());
-            logger.info("initializing logback success. file={};", logbackCfgFile);
-        } catch (Throwable cause) {
-            logger.warn("initialize logback failed. file={};", logbackCfgFile, cause);
-        } finally {
-            IOUtils.closeQuietly(is);
-        }
-    }
+
 
     /**
      * 销毁Logback日志框架

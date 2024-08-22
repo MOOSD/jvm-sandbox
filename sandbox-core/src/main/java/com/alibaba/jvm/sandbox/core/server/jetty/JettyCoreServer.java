@@ -16,7 +16,6 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.instrument.Instrumentation;
 import java.net.InetSocketAddress;
@@ -175,7 +174,7 @@ public class JettyCoreServer implements CoreServer {
         this.cfg = cfg;
         try {
             initializer.initProcess(() -> {
-                LogbackUtils.initByFile(cfg.getNamespace(),cfg.getLogBackFile());
+                LogbackUtils.init(cfg.getNamespace(),cfg.getLogBackPath());
                 logger.info("initializing server. cfg={}", cfg);
                 jvmSandbox = new JvmSandbox(cfg, inst);
                 initHttpServer();

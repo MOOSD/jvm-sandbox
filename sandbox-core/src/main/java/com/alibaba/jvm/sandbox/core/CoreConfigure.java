@@ -24,7 +24,7 @@ public class CoreConfigure {
     private static final String DEFAULT_VAL_NAMESPACE = "default";
 
     private static final String KEY_SANDBOX_HOME = "sandbox_home";
-    private static final String LOGBACK_CONFIG_PATH = "logback_config_path";
+    private static final String KEY_LOGBACK_CONFIG_PATH = "logback_config_path";
     private static final String KEY_LAUNCH_MODE = "mode";
     private static final String KEY_SERVER_IP = "server.ip";
     private static final String KEY_SERVER_PORT = "server.port";
@@ -39,6 +39,15 @@ public class CoreConfigure {
 
     private static final String KEY_UNSAFE_ENABLE = "unsafe.enable";
     private static final String KEY_NATIVE_SUPPORTED = "native.supported";
+    private static final String KEY_MF_BUILD_TIME = "mf.build-time";
+    private static final String KEY_MF_GIT_BRANCH = "mf.git-branch";
+    private static final String KEY_MF_GIT_COMMIT_ID = "mf.git-commit-id";
+    private static final String KEY_MF_GIT_COMMIT_MESSAGE = "mf.git-commit-message";
+    private static final String KEY_MF_GIT_COMMIT_TIME = "mf.git-commit-time";
+    private static final String KEY_MF_GIT_REMOTE_URL = "mf.git-remote-url";
+    private static final String KEY_GROUP_ID = "mf.group-id";
+    private static final String KEY_ARTIFACT_ID = "mf.artifact-Id";
+
 
     // 受保护key数组，在保护key范围之内，以用户传递的配置为准，系统配置不允许覆盖
     private static final String[] PROTECT_KEY_ARRAY = {KEY_NAMESPACE, KEY_SANDBOX_HOME, KEY_LAUNCH_MODE, KEY_SERVER_IP, KEY_SERVER_PORT, KEY_SERVER_CHARSET};
@@ -50,20 +59,18 @@ public class CoreConfigure {
 
     private final Map<String, String> featureMap = new LinkedHashMap<>();
 
-    private final File logBackFile;
+
 
     private CoreConfigure(final String featureString,
                           final String propertiesFilePath) {
         final Map<String, String> featureMap = toFeatureMap(featureString);
         final Map<String, String> propertiesMap = toPropertiesMap(propertiesFilePath);
-        logBackFile = null;
         this.featureMap.putAll(merge(featureMap, propertiesMap));
     }
 
-    private CoreConfigure(final String featureString, final Properties properties, final File logBackConfFile) {
+    private CoreConfigure(final String featureString, final Properties properties) {
         final Map<String, String> featureMap = toFeatureMap(featureString);
         final Map<String, String> propertiesMap = propertiesToMap(properties);
-        this.logBackFile = logBackConfFile;
         this.featureMap.putAll(merge(featureMap, propertiesMap));
     }
 
@@ -156,9 +163,8 @@ public class CoreConfigure {
         return instance = new CoreConfigure(featureString, propertiesFilePath);
     }
 
-    public static CoreConfigure toConfigure(final String featureString, final Properties properties
-            , final File logBackConfFile) {
-        return instance = new CoreConfigure(featureString, properties, logBackConfFile);
+    public static CoreConfigure toConfigure(final String featureString, final Properties properties) {
+        return instance = new CoreConfigure(featureString, properties);
     }
 
     public static CoreConfigure getInstance() {
@@ -266,8 +272,8 @@ public class CoreConfigure {
         return featureMap.get(KEY_CFG_LIB_PATH);
     }
 
-    public File getLogBackFile() {
-        return logBackFile;
+    public String getLogBackPath() {
+        return featureMap.get(KEY_LOGBACK_CONFIG_PATH);
     }
 
     @Override
@@ -390,5 +396,36 @@ public class CoreConfigure {
     public boolean isNativeSupported() {
         return BooleanUtils.toBoolean(featureMap.get(KEY_NATIVE_SUPPORTED));
     }
+
+
+    public String getBuildTime(){
+        return featureMap.get(KEY_MF_BUILD_TIME);
+    }
+
+    public String getGitBranch(){
+        return featureMap.get(KEY_MF_GIT_BRANCH);
+    }
+    public String getGitCommitId(){
+        return featureMap.get(KEY_MF_GIT_COMMIT_ID);
+    }
+
+    public String getGitCommitMessage(){
+        return featureMap.get(KEY_MF_GIT_COMMIT_MESSAGE);
+    }
+
+    public String getGitCommitTime(){
+        return featureMap.get(KEY_MF_GIT_COMMIT_TIME);
+    }
+    public String getGitRemoteUrl(){
+        return featureMap.get(KEY_MF_GIT_REMOTE_URL);
+    }
+    public String getGroupId(){
+        return featureMap.get(KEY_GROUP_ID);
+    }
+    public String getArtifactId(){
+        return featureMap.get(KEY_ARTIFACT_ID);
+    }
+
+
 
 }

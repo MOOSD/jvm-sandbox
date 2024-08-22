@@ -3,15 +3,15 @@ package com.alibaba.jvm.sandbox.agent;
 import org.springframework.boot.loader.archive.Archive;
 import org.springframework.boot.loader.archive.JarFileArchive;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.lang.instrument.Instrumentation;
 import java.net.*;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.util.*;
+import java.util.jar.Attributes;
 import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 
 import static java.lang.String.format;
 
@@ -26,6 +26,22 @@ public class AgentBoot {
     private static final String NAME_SPACE = "default";
     private static final String CLASS_OF_CORE_CONFIGURE = "com.alibaba.jvm.sandbox.core.CoreConfigure";
     private static final String CLASS_OF_PROXY_CORE_SERVER = "com.alibaba.jvm.sandbox.core.server.ProxyCoreServer";
+
+    private static final String MENI_FEST_PATH = "META-INF/MANIFEST.MF";
+    // manifest文件中属性和properties中的属性映射
+    private static final HashMap<String,String> MF_KEY_MAP;
+    static {
+        MF_KEY_MAP = new HashMap<>(6);
+        MF_KEY_MAP.put("mf.group-id", "Group-Id");
+        MF_KEY_MAP.put("mf.artifact-Id", "Artifact-Id");
+        MF_KEY_MAP.put("mf.build-time", "Build-Time");
+        MF_KEY_MAP.put("mf.git-branch", "Git-Branch");
+        MF_KEY_MAP.put("mf.git-commit-id", "Git-Commit-Id");
+        MF_KEY_MAP.put("mf.git-commit-message", "Git-Commit-Message");
+        MF_KEY_MAP.put("mf.git-commit-time", "Git-Commit-Time");
+        MF_KEY_MAP.put("mf.git-remote-url", "Git-Remote-Url");
+
+    }
 
     public static void premain(String featureString, Instrumentation inst) throws Exception {
         final File agentJar = getArchiveFileContains();
@@ -43,11 +59,11 @@ public class AgentBoot {
 
         // 获取核心配置字符串 todo 支持命令行参数添加配置
         final String coreFeatureString = getCoreFeatureString(agentJar);
-        Properties configProperties = getCoreConfigProperties(agentJar);
-        File logConfigFile = getLogConfigFile(agentJar);
+        // 获取配置信息
+        Properties configProperties = getAgentConfigProperties(agentJar);
         final Class<?> classOfConfigure = classLoader.loadClass(CLASS_OF_CORE_CONFIGURE);
-        final Object objectOfCoreConfigure = classOfConfigure.getMethod("toConfigure", String.class, Properties.class, File.class)
-                .invoke(null, coreFeatureString, configProperties, logConfigFile);
+        final Object objectOfCoreConfigure = classOfConfigure.getMethod("toConfigure", String.class, Properties.class)
+                .invoke(null, coreFeatureString, configProperties);
 
         // CoreServer类定义
         final Class<?> classOfProxyServer = classLoader.loadClass(CLASS_OF_PROXY_CORE_SERVER);
@@ -82,14 +98,15 @@ public class AgentBoot {
     }
     private static String getCoreFeatureString(File agentJar) throws IOException {
         String systemModulePath = JarUtils.getDirPath(agentJar, MODULE_JAR_PATH);
-
+        String logConfigFilePath = getLogConfigFilePath(agentJar);
+        System.out.println("日志文件位置：" + logConfigFilePath);
         final String sandboxHome = JarUtils.getTempFilePath();
         // todo 暂时取消SPI
         String providerPath = "null";
         // todo 暂时取消用户模块的加载
         String userModulePath = "null";
         return format(
-                "system_module=%s;mode=%s;sandbox_home=%s;user_module=%s;provider=%s;namespace=%s;",
+                "system_module=%s;mode=%s;sandbox_home=%s;user_module=%s;provider=%s;namespace=%s;logback_config_path=%s;",
                 systemModulePath,
                 // SANDBOX_MODULE_PATH,
                 "agent",
@@ -98,16 +115,17 @@ public class AgentBoot {
                 userModulePath,
                 providerPath,
                 // SANDBOX_PROVIDER_LIB_PATH,
-                NAME_SPACE
+                NAME_SPACE,
+                logConfigFilePath
         );
     }
 
 
-    private static File getLogConfigFile(File agentJar) throws IOException {
-        return JarUtils.findFile(agentJar, LOG_CONFIG_NAME);
+    private static String getLogConfigFilePath(File agentJar) throws IOException {
+        return JarUtils.findFile(agentJar, LOG_CONFIG_NAME).getAbsolutePath();
     }
 
-    private static Properties getCoreConfigProperties(File agentJar) throws IOException {
+    private static Properties getAgentConfigProperties(File agentJar) throws IOException {
         File cfgFile = JarUtils.findFile(agentJar, CORE_CONFIG_NAME);
         if(cfgFile == null){
             return null;
@@ -116,7 +134,8 @@ public class AgentBoot {
         try(FileReader cfgFileReader = new FileReader(cfgFile)){
             properties.load(cfgFileReader);
         }
-
+        // 从manifest中加载jar包的信息
+        getJarInfoFroManifest(properties);
         return properties;
     }
 
@@ -166,6 +185,22 @@ public class AgentBoot {
         final CompoundableClassLoader classLoader;
         classLoader = new CompoundableClassLoader(urls, BOOTSTRAP_CLASS_LOADER);
         return classLoader;
+    }
+
+    private static synchronized void getJarInfoFroManifest(Properties properties) throws IOException {
+        Enumeration<URL> systemResources = ClassLoader.getSystemResources(MENI_FEST_PATH);
+        if (systemResources.hasMoreElements()) {
+            URL url = systemResources.nextElement();
+            Manifest manifest = new Manifest(url.openStream());
+            Attributes mainAttributes = manifest.getMainAttributes();
+            MF_KEY_MAP.forEach((left,right)-> {
+                String mfValue = mainAttributes.getValue(right);
+                if (Objects.isNull(mfValue)){
+                    return;
+                }
+                properties.setProperty(left,mfValue);
+            });
+        }
     }
 
 
