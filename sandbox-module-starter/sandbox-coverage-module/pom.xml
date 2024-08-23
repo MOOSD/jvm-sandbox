@@ -27,7 +27,6 @@
         <dependency>
             <groupId>cn.newgrand.ck</groupId>
             <artifactId>precision-base-module</artifactId>
-            <version>1.4.0</version>
         </dependency>
     </dependencies>
 

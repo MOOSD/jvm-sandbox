@@ -3,12 +3,14 @@ package cn.newgrand.ck.module;
 
 
 import cn.newgrand.ck.pojo.MethodCoverage;
+import cn.newgrand.ck.tools.JSON;
 import com.alibaba.jvm.sandbox.api.Information;
 import com.alibaba.jvm.sandbox.api.LoadCompleted;
 import com.alibaba.jvm.sandbox.api.Module;
 import com.alibaba.jvm.sandbox.api.listener.ext.Advice;
 import com.alibaba.jvm.sandbox.api.listener.ext.AdviceListener;
 import com.alibaba.jvm.sandbox.api.listener.ext.EventWatchBuilder;
+import com.alibaba.jvm.sandbox.api.resource.ConfigInfo;
 import com.alibaba.jvm.sandbox.api.resource.ModuleEventWatcher;
 import org.kohsuke.MetaInfServices;
 import org.slf4j.Logger;
@@ -24,12 +26,15 @@ public class CodeCoverageModule implements Module, LoadCompleted {
     @Resource
     private ModuleEventWatcher moduleEventWatcher;
 
+    @Resource
+    private ConfigInfo configInfo;
     /**
      * 按照方法级别手机覆盖率信息
      */
     @Override
     public void loadCompleted() {
         log.info("类加载器1：{},类加载器2：{}",log.getClass().getClassLoader().toString(), moduleEventWatcher.toString());
+        log.info("configInfo:{}", JSON.toJSONString(configInfo));
         AdviceListener adviceListener = new AdviceListener() {
             final Map<String, MethodCoverage> coverageInfo = new LinkedHashMap<>();
 

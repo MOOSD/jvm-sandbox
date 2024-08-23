@@ -198,4 +198,13 @@ public interface ConfigInfo {
      */
     String getVersion();
 
+
+    String getBuildTime();
+    String getGitBranch();
+    String getGitCommitId();
+    String getGitCommitMessage();
+    String getGitCommitTime();
+    String getGitRepoUrl();
+    String getAppName();
+    String getAppFullName();
 }

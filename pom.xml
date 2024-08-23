@@ -119,6 +119,12 @@
             </dependency>
             <dependency>
                 <groupId>com.alibaba.jvm.sandbox</groupId>
+                <artifactId>sandbox-module-starter</artifactId>
+                <version>${sandbox.version}</version>
+                <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba.jvm.sandbox</groupId>
                 <artifactId>sandbox-api</artifactId>
                 <version>${sandbox.version}</version>
             </dependency>

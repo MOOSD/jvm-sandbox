@@ -142,4 +142,44 @@ class DefaultConfigInfo implements ConfigInfo {
             IOUtils.closeQuietly(is);
         }
     }
+
+    @Override
+    public String getBuildTime() {
+        return cfg.getBuildTime();
+    }
+
+    @Override
+    public String getGitBranch() {
+        return cfg.getGitBranch();
+    }
+
+    @Override
+    public String getGitCommitId() {
+        return cfg.getGitCommitId();
+    }
+
+    @Override
+    public String getGitCommitMessage() {
+        return cfg.getGitCommitMessage();
+    }
+
+    @Override
+    public String getGitCommitTime() {
+        return cfg.getGitCommitTime();
+    }
+
+    @Override
+    public String getGitRepoUrl() {
+        return cfg.getGitRemoteUrl();
+    }
+
+    @Override
+    public String getAppName() {
+        return cfg.getArtifactId();
+    }
+
+    @Override
+    public String getAppFullName() {
+        return cfg.getGroupId()+":"+cfg.getArtifactId();
+    }
 }

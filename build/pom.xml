@@ -26,6 +26,11 @@
             <groupId>com.alibaba.jvm.sandbox</groupId>
             <artifactId>sandbox-spy</artifactId>
         </dependency>
+        <dependency>
+            <groupId>cn.newgrand.ck</groupId>
+            <artifactId>sandbox-coverage-module</artifactId>
+            <version>1.4.0</version>
+        </dependency>
     </dependencies>
 
     <properties>
