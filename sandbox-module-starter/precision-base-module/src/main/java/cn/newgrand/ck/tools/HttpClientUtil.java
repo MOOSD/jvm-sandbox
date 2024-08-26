@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.NoHttpResponseException;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.config.SocketConfig;
@@ -36,9 +38,11 @@ public class HttpClientUtil {
     private final static int CONNECT_TIMEOUT = 8000;
     private final static int SOCKET_TIMEOUT = 200 * 1000;
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private static final Logger log = LoggerFactory.getLogger(HttpClientUtil.class);
 
-    public CloseableHttpClient httpClient() {
+    public static CloseableHttpClient httpClient;
+
+    static {
         Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
                 .register("http", PlainConnectionSocketFactory.getSocketFactory())
                 .register("https", SSLConnectionSocketFactory.getSocketFactory())
@@ -62,18 +66,11 @@ public class HttpClientUtil {
         client.setDefaultRequestConfig(requestConfig);
         // 配置连接池
         client.setConnectionManager(connectionManager);
-        return client.build();
+        httpClient = client.build();
     }
 
 
-    public ObjectMapper objectMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        return mapper;
-    }
-
-
-    private HttpClientBuilder getHttpClientBuilder() {
+    private static HttpClientBuilder getHttpClientBuilder() {
         HttpClientBuilder httpClientBuilder = HttpClients.custom();
         // 只有io异常才会触发重试
         httpClientBuilder.setRetryHandler((IOException exception, int curRetryCount, HttpContext context) -> {

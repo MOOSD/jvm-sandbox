@@ -2,23 +2,29 @@ package cn.newgrand.ck.pojo;
 
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.Objects;
 
-public class MethodCoverage {
+/**
+ * 方法的覆盖率信息
+ */
+public class ClassCoverage {
+
     private String className;
 
     private String methodName;
 
-//    private Object[] parameter;
+    private Object[] parameter;
 
-    /**
-     * 默认30行
-     */
-    private ArrayList<Integer> coverageLine = new ArrayList<>(30);
+    private BitSet coverage;
 
-    public void recode(Integer line){
-        coverageLine.add(line);
+
+    public Object[] getParameter() {
+        return parameter;
     }
+
+    public void setParameter(Object[] parameter) {
+        this.parameter = parameter;
+    }
+
 
     public String getClassName() {
         return className;
@@ -34,14 +40,5 @@ public class MethodCoverage {
 
     public void setMethodName(String methodName) {
         this.methodName = methodName;
-    }
-
-
-    public ArrayList<Integer> getCoverageLine() {
-        return coverageLine;
-    }
-
-    public void setCoverageLine(ArrayList<Integer> coverageLine) {
-        this.coverageLine = coverageLine;
     }
 }
