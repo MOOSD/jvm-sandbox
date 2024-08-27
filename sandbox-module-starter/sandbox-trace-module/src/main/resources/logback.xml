@@ -2,18 +2,20 @@
 <configuration scan="true" scanPeriod="10000">
 
     <!-- DEBUG模块：Servlet监控日志 -->
-    <logger level="INFO">
-        <appender class="ch.qos.logback.core.rolling.RollingFileAppender">
-            <file>${user.home}/logs/sandbox/precision/trace.log</file>
-            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-                <FileNamePattern>${user.home}/logs/sandbox/precision/trace.log.%d{yyyy-MM-dd}</FileNamePattern>
-                <MaxHistory>30</MaxHistory>
-            </rollingPolicy>
-            <encoder>
-                <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %msg%n</pattern>
-                <charset>UTF-8</charset>
-            </encoder>
-        </appender>
-    </logger>
+    <appender name="FILE_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${user.home}/logs/sandbox/precision/trace.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>${user.home}/logs/sandbox/precision/trace.log.%d{yyyy-MM-dd}</FileNamePattern>
+            <MaxHistory>30</MaxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+    <root level="INFO">
+        <appender-ref ref = "FILE_LOG"/>
+    </root>
+
 
 </configuration>

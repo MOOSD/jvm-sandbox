@@ -5,17 +5,17 @@ import java.util.List;
 
 public class MethodTreeDTO {
 
-    private String data;
+    private MethodInfo methodInfo;
     private long beginTimestamp;
     private long endTimestamp;
     private List<MethodTreeDTO> children = new ArrayList<>();
 
-    public String getData() {
-        return data;
+    public MethodInfo getMethodInfo() {
+        return methodInfo;
     }
 
-    public void setData(String data) {
-        this.data = data;
+    public void setMethodInfo(MethodInfo methodInfo) {
+        this.methodInfo = methodInfo;
     }
 
     public long getBeginTimestamp() {
