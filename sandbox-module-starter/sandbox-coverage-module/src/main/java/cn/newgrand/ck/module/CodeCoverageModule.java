@@ -10,6 +10,7 @@ import com.alibaba.jvm.sandbox.api.LoadCompleted;
 import com.alibaba.jvm.sandbox.api.Module;
 import com.alibaba.jvm.sandbox.api.listener.ext.Advice;
 import com.alibaba.jvm.sandbox.api.listener.ext.AdviceListener;
+import com.alibaba.jvm.sandbox.api.listener.ext.Behavior;
 import com.alibaba.jvm.sandbox.api.listener.ext.EventWatchBuilder;
 import com.alibaba.jvm.sandbox.api.resource.ConfigInfo;
 import com.alibaba.jvm.sandbox.api.resource.ModuleEventWatcher;
@@ -32,6 +33,7 @@ public class CodeCoverageModule implements Module, LoadCompleted {
 
     private AsyncDataExecutor<MethodCoverage> dataExecutor;
 
+    private CoverageDataConsumerBuilder coverageDataConsumerBuilder;
 
     /**
      * 按照方法级别手机覆盖率信息
@@ -45,6 +47,7 @@ public class CodeCoverageModule implements Module, LoadCompleted {
 
             @Override
             protected void before(Advice advice) {
+                // todo 过滤部分方法
                 MethodCoverage methodCoverage = new MethodCoverage();
                 String methodName = advice.getBehavior().getName();
                 String className = Objects.nonNull(advice.getTarget()) ? advice.getTarget().getClass().getName() : "null";
@@ -56,16 +59,20 @@ public class CodeCoverageModule implements Module, LoadCompleted {
             }
 
             @Override
-            protected void after(Advice advice) {
-                dataExecutor.put(advice.attachment());
-            }
-
-            @Override
             protected void beforeLine(Advice advice, int lineNum) {
                 MethodCoverage coverage = advice.attachment();
                 coverage.recode(lineNum);
             }
+
+            @Override
+            protected void after(Advice advice) {
+                dataExecutor.put(advice.attachment());
+            }
+
+
         };
+        // 激活executor
+        dataExecutor.active();
 
         // 开启监听
         new EventWatchBuilder(moduleEventWatcher, EventWatchBuilder.PatternType.REGEX)//一定要选择这种表达式模式
@@ -74,8 +81,6 @@ public class CodeCoverageModule implements Module, LoadCompleted {
                 .onWatching()
                 .withLine()//有它，才能获取到行号
                 .onWatch(adviceListener);
-        // 激活executor
-        dataExecutor.active();
     }
 
     //构建匹配类的正则表达式
@@ -85,8 +90,10 @@ public class CodeCoverageModule implements Module, LoadCompleted {
 
     private void initModule(){
         log.info("覆盖率模块加载中");
+        // 创建数据消费者
+        this.coverageDataConsumerBuilder = new CoverageDataConsumerBuilder(configInfo);
         // 初始化dataExecutor
-        dataExecutor = new AsyncDataExecutor<>(1000,2, new CoverageDataConsumerBuilder(configInfo));
+        this.dataExecutor = new AsyncDataExecutor<>(10240,2, coverageDataConsumerBuilder);
     }
 
 }
