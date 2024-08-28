@@ -1,44 +1,48 @@
 package cn.newgrand.ck.pojo;
 
-import java.util.ArrayList;
-import java.util.BitSet;
+import cn.newgrand.ck.tools.ConcurrentHashSet;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 方法的覆盖率信息
  */
 public class ClassCoverage {
 
-    private String className;
+    private String ClassName;
+    /**
+     * 使用hashSet去重
+     */
+    private final ConcurrentHashSet<Integer> coverageLineSet = new ConcurrentHashSet<>();
 
-    private String methodName;
-
-    private Object[] parameter;
-
-    private BitSet coverage;
-
-
-    public Object[] getParameter() {
-        return parameter;
+    public ClassCoverage(String className) {
+        ClassName = className;
     }
 
-    public void setParameter(Object[] parameter) {
-        this.parameter = parameter;
+    public boolean recordCoverage(int line){
+        return coverageLineSet.add(line);
     }
-
 
     public String getClassName() {
-        return className;
+        return ClassName;
     }
 
     public void setClassName(String className) {
-        this.className = className;
+        ClassName = className;
     }
 
-    public String getMethodName() {
-        return methodName;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ClassCoverage that = (ClassCoverage) o;
+
+        return ClassName.equals(that.ClassName);
     }
 
-    public void setMethodName(String methodName) {
-        this.methodName = methodName;
+    @Override
+    public int hashCode() {
+        return ClassName.hashCode();
     }
 }

@@ -31,7 +31,6 @@ public class AsyncDataExecutor<T> {
     public AsyncDataExecutor(int dataQueueSize, int consumerCount, ConsumerBuilder<T> consumerBuilder) {
         this.consumerBuilder = consumerBuilder;
         dataQueue = new MpmcArrayQueue<>(dataQueueSize);
-
         consumerThreadPool = new ThreadPoolExecutor(consumerCount, consumerCount,
                 0L, TimeUnit.MILLISECONDS,
                 new SynchronousQueue<>());
@@ -56,16 +55,18 @@ public class AsyncDataExecutor<T> {
      * @param data
      */
     public void put(T data){
-        dataQueue.offer(data);
-        semaphore.release();
-
+        boolean offer = dataQueue.offer(data);
+        if(offer){
+            semaphore.release();
+            return;
+        }
+        log.warn("队列已满，数据丢弃");
     }
 
     public Runnable getConsumerRunnable(){
         // 实例化consumer
         DataConsumer<T> consumer = consumerBuilder.getConsumer();
         return () -> {
-            Object param;
             while(true){
                 // 异常不终止消费行为
                 try{
