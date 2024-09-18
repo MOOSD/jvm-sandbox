@@ -17,14 +17,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
-import java.lang.reflect.Field;
 import java.util.*;
 
 @MetaInfServices(Module.class)
 @Information(id = "method-info", version = "0.0.1", author = "hts")
 public class MethodInfoModule implements Module, LoadCompleted {
 
-    private final Logger logger = LoggerFactory.getLogger("METHOD-INFO");
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 
     @Resource
@@ -36,6 +35,8 @@ public class MethodInfoModule implements Module, LoadCompleted {
 
     @Override
     public void loadCompleted() {
+
+        logger.info("动态调用链路模块加载完成！");
 
         new EventWatchBuilder(moduleEventWatcher, EventWatchBuilder.PatternType.REGEX)
                 .onClass(buildClassPattern())
@@ -55,15 +56,6 @@ public class MethodInfoModule implements Module, LoadCompleted {
                             methodTree = advice.getProcessTop().attachment();
                             methodTree.begin(getMethodInfo(advice));
                         }
-
-                        Class<?> clazz = Class.forName("com.example.ServiceProperties");
-                        Object instance = clazz.getDeclaredConstructor().newInstance();
-
-                        Field field = clazz.getDeclaredField("name");
-                        field.setAccessible(true);
-                        String serviceName = (String) field.get(instance);
-
-                        logger.info("serviceName:[{}]", serviceName);
                     }
 
 
@@ -159,23 +151,24 @@ public class MethodInfoModule implements Module, LoadCompleted {
 
     //根据实际情况 构建匹配类的正则表达式
     private String buildClassPattern() {
-//        return "^cn\\.newgrand\\.ck.*";
-        return "^cn\\.newgrand\\.ck(?!\\.(entity|log|config)).*";
+        return "^cn\\.newgrand\\.ck.*";
+//        return "^cn\\.newgrand\\.ck\\.(controller|service|util|mapper).*";
     }
 
 
     private void sendMessage(Advice advice){
-        if(advice.isProcessTop()){
-            final MethodTree methodTree = advice.getProcessTop().attachment();
-//            System.out.println("methodTree.rendering() = " + methodTree.rendering());
+        if(advice.isProcessTop() && Objects.nonNull(TraceIdModule.getRequestTtl())){
+            if(advice.getTarget().getClass().getName().contains("Controller")){
+                final MethodTree methodTree = advice.getProcessTop().attachment();
 
-            String json = null;
-            try {
-                ObjectMapper objectMapper = new ObjectMapper();
-                json = objectMapper.writeValueAsString(methodTree.convertToDTO(methodTree.getCurrent()));
-                System.out.println("json = " + json);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
+                String json = null;
+                try {
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    json = objectMapper.writeValueAsString(methodTree.convertToDTO(methodTree.getCurrent()));
+                    logger.info("方法[{}]调用链路:{} ", advice.getBehavior().getName(), json);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
     }

@@ -13,7 +13,7 @@ public class MethodTree {
     // 当前节点
     private MethodNode current;
 
-    public MethodTree(Object title) {
+    public MethodTree(MethodInfo title) {
         this.root = new MethodNode(title).markBegin();
         this.current = root;
     }
@@ -34,7 +34,7 @@ public class MethodTree {
      * @param data 节点数据
      * @return this
      */
-    public MethodTree begin(Object data) {
+    public MethodTree begin(MethodInfo data) {
 //        current = new MethodTree.MethodNode(current, data);
 //        current.markBegin();
 
@@ -55,7 +55,7 @@ public class MethodTree {
         return current.data;
     }
 
-    public MethodTree set(Object data) {
+    public MethodTree set(MethodInfo data) {
         if (current.isRoot()) {
             throw new IllegalStateException("current node is root.");
         }
@@ -92,7 +92,7 @@ public class MethodTree {
 
     public MethodTreeDTO convertToDTO(MethodNode node) {
         MethodTreeDTO dto = new MethodTreeDTO();
-        dto.setData(node.data.toString());
+        dto.setMethodInfo(node.data);
         dto.setBeginTimestamp(node.beginTimestamp);
         dto.setEndTimestamp(node.endTimestamp);
         for (MethodNode child : node.children) {
@@ -114,7 +114,7 @@ public class MethodTree {
         /**
          * 节点数据
          */
-        Object data;
+        MethodInfo data;
 
         /**
          * 子节点
@@ -131,12 +131,12 @@ public class MethodTree {
          */
         private long endTimestamp;
 
-        private MethodNode(Object data) {
+        private MethodNode(MethodInfo data) {
             this.parent = null;
             this.data = data;
         }
 
-        private MethodNode(MethodNode parent, Object data) {
+        private MethodNode(MethodNode parent, MethodInfo data) {
             this.parent = parent;
             this.data = data;
             parent.children.add(this);
