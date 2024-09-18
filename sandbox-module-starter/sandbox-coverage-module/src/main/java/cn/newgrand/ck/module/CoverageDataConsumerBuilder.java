@@ -60,7 +60,7 @@ public class CoverageDataConsumerBuilder implements ConsumerBuilder<MethodCovera
             for (Integer i : data.getCoverageLine()) {
                 boolean add = classCoverage.recordCoverage(i);
                 // 如果有新增的未执行的代码行，则标记其为新增。
-                if (add && !sendClassCoverage.contains(classCoverage)){
+                if (add){
                     sendClassCoverage.add(classCoverage);
                 }
             }
