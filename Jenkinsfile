@@ -1,4 +1,7 @@
 pipeline {
+    tools {
+        jdk 'JDK8'  // 在 Global Tool Configuration 中定义的 JDK 名称
+    }
     //使用带有bugkiller标签的资源执行流水线
     agent {
         node {
