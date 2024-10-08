@@ -12,6 +12,7 @@ pipeline {
         //构建阶段，执行跳过测试的打包
         stage('Build') {
             steps {
+                sh ' docker version '
                 sh ' echo "${pwd} 执行打包:"'
                 sh ' mvn -B -U -DskipTests clean package '
             }
