@@ -32,16 +32,12 @@ pipeline {
         stage('push'){
             steps {
                 script {
-                    // 使用 Jenkins 的 withCredentials 来读取 Docker 注册表的凭据
-                    withCredentials([usernamePassword(credentialsId: DOCKER_REGISTRY_CREDENTIALS_ID,
-                                                     usernameVariable: 'REGISTRY_USER',
-                                                     passwordVariable: 'REGISTRY_PASS')]) {
-                        sh "echo $REGISTRY_PASS | docker login -u $REGISTRY_USER --password-stdin $DOCKER_REGISTRY_URL"
+                    withDockerRegistry(credentialsId: '3f24bd3d-b035-4656-a4f5-99f4214127bd', toolName: 'docker', url: '$DOCKER_REGISTRY_URL') {
+                        sh 'echo "推送镜像"'
+                        sh 'docker push $DOCKER_IMAGE'
+                        sh 'docker logout $DOCKER_REGISTRY_URL'
                     }
                 }
-                sh 'echo "推送镜像"'
-                sh 'docker push $DOCKER_IMAGE'
-                sh 'docker logout $DOCKER_REGISTRY_URL'
             }
         }
     }
