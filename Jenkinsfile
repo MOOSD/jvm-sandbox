@@ -2,6 +2,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'newgrand-up-registry.cn-hangzhou.cr.aliyuncs.com/newgrand_hawkeye/hawkeye-agent:latest'
         DOCKER_REGISTRY_URL = 'newgrand-up-registry.cn-hangzhou.cr.aliyuncs.com'
+        DOCKERHUB_CREDENTIALS = credentials('3f24bd3d-b035-4656-a4f5-99f4214127bd')
     }
     tools {
         jdk 'JDK8'  // 在 Global Tool Configuration 中定义的 JDK 名称
@@ -14,13 +15,13 @@ pipeline {
     }
     stages {
         //构建阶段，执行跳过测试的打包
-        stage('maven_build') {
+        stage('maven build') {
             steps {
                 sh ' echo "${pwd} 执行打包:"'
                 sh ' mvn -B -U -DskipTests clean package '
             }
         }
-        stage('docker_build') {
+        stage('docker build') {
             steps {
                 dir("./build") {
                     sh 'docker version'
@@ -29,15 +30,19 @@ pipeline {
                 }
             }
         }
-        stage('push'){
+
+        stage('docker login'){
             steps {
-                script {
-                    withDockerRegistry(credentialsId: '3f24bd3d-b035-4656-a4f5-99f4214127bd', toolName: 'docker', url: '$DOCKER_REGISTRY_URL') {
-                        sh 'echo "推送镜像"'
-                        sh 'docker push $DOCKER_IMAGE'
-                        sh 'docker logout $DOCKER_REGISTRY_URL'
-                    }
-                }
+
+                sh 'echo "docker login"'
+                sh 'echo "$DOCKERHUB_CREDENTIALS_PSW"'
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | sudo docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+            }
+        }
+        stage('image push'){
+            steps {
+                sh 'docker push $DOCKER_IMAGE'
+                sh 'docker logout $DOCKER_REGISTRY_URL'
             }
         }
     }
