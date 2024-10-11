@@ -207,4 +207,7 @@ public interface ConfigInfo {
     String getGitRepoUrl();
     String getAppName();
     String getAppFullName();
+    String getHkServerIp();
+
+    String getHkServerPort();
 }

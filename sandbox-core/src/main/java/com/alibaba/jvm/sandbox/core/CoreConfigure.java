@@ -57,6 +57,7 @@ public class CoreConfigure {
      */
     // 数据上报用的服务器ip
     private static final String KEY_HK_SERVER_IP = "hk.server.ip";
+    private static final String KEY_HK_SERVER_PORT = "hk.server.port";
 
     // 心跳检查的周期，单位是秒
     private static final String KEY_HK_HEALTH_CYCLE = "hk.health.cycle";
@@ -431,5 +432,11 @@ public class CoreConfigure {
     }
 
 
+    public String getHkServerIp() {
+        return featureMap.get(KEY_HK_SERVER_IP);
+    }
 
+    public String getHkServerPort() {
+        return featureMap.get(KEY_HK_SERVER_PORT);
+    }
 }

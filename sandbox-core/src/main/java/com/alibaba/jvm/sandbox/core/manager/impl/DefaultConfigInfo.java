@@ -182,4 +182,15 @@ class DefaultConfigInfo implements ConfigInfo {
     public String getAppFullName() {
         return cfg.getGroupId()+":"+cfg.getArtifactId();
     }
+
+    @Override
+    public String getHkServerIp() {
+        return cfg.getHkServerIp();
+    }
+
+    @Override
+    public String getHkServerPort() {
+        return cfg.getHkServerPort();
+    }
+
 }
