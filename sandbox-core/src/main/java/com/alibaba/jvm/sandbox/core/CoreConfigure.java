@@ -39,6 +39,10 @@ public class CoreConfigure {
 
     private static final String KEY_UNSAFE_ENABLE = "unsafe.enable";
     private static final String KEY_NATIVE_SUPPORTED = "native.supported";
+
+    /**
+     * manifest文件中的内容
+     */
     private static final String KEY_MF_BUILD_TIME = "mf.build-time";
     private static final String KEY_MF_GIT_BRANCH = "mf.git-branch";
     private static final String KEY_MF_GIT_COMMIT_ID = "mf.git-commit-id";
@@ -47,6 +51,16 @@ public class CoreConfigure {
     private static final String KEY_MF_GIT_REMOTE_URL = "mf.git-remote-url";
     private static final String KEY_GROUP_ID = "mf.group-id";
     private static final String KEY_ARTIFACT_ID = "mf.artifact-Id";
+
+    /**
+     * 精准化专用的内容
+     */
+    // 数据上报用的服务器ip
+    private static final String KEY_HK_SERVER_IP = "hk.server.ip";
+
+    // 心跳检查的周期，单位是秒
+    private static final String KEY_HK_HEALTH_CYCLE = "hk.health.cycle";
+
 
 
     // 受保护key数组，在保护key范围之内，以用户传递的配置为准，系统配置不允许覆盖
@@ -124,31 +138,21 @@ public class CoreConfigure {
 
     private Map<String, String> merge(Map<String, String> featureMap, Map<String, String> propertiesMap) {
 
-        // 以featureMap配置为准
-        final Map<String, String> mergeMap = new LinkedHashMap<>(featureMap);
+        // 以合并propertiesMap配置为准
+        final Map<String, String> mergeMap = new LinkedHashMap<>(propertiesMap);
 
         // 合并propertiesMap
-        for (final Map.Entry<String, String> propertiesEntry : propertiesMap.entrySet()) {
+        for (final Map.Entry<String, String> featureEntry : featureMap.entrySet()) {
 
             // 如果是多值KEY，且featureMap中也存在，则进行合并
-            if (ArrayUtils.contains(MULTI_KEY_ARRAY, propertiesEntry.getKey())
-                    && mergeMap.containsKey(propertiesEntry.getKey())) {
-                mergeMap.put(
-                        propertiesEntry.getKey(),
-                        mergeMap.get(propertiesEntry.getKey()) + ";" + propertiesEntry.getValue()
-                );
+            if (ArrayUtils.contains(MULTI_KEY_ARRAY, featureEntry.getKey())
+                    && mergeMap.containsKey(featureEntry.getKey())) {
+                mergeMap.put(featureEntry.getKey(), mergeMap.get(featureEntry.getKey()) + ";" + featureEntry.getValue());
             }
 
-            // 如果是受保护KEY，只有在featureMap中为空值时才能合并入
-            else if(ArrayUtils.contains(PROTECT_KEY_ARRAY, propertiesEntry.getKey())) {
-                mergeMap.computeIfAbsent(propertiesEntry.getKey(), k -> propertiesEntry.getValue());
-            }
-
-
-
-            // 其他情况一律以propertiesMap为准
+            // 其他情况一律以featureMap为准
             else {
-                mergeMap.put(propertiesEntry.getKey(), propertiesEntry.getValue());
+                mergeMap.put(featureEntry.getKey(), featureEntry.getValue());
             }
 
         }

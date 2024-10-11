@@ -42,6 +42,10 @@ public class AgentBoot {
         MF_KEY_MAP.put("mf.git-remote-url", "Git-Remote-Url");
 
     }
+    private static final String KEY_HK_SERVER_IP = "hk.server.ip";
+    private static final String KEY_SERVER_IP = "server.ip";
+    private static final String KEY_SERVER_PORT = "server.port";
+    private static final String HK_SERVER_IP_ENV_NAME = "HK_SERVER_IP";
 
     public static void premain(String featureString, Instrumentation inst) throws Exception {
         final File agentJar = getArchiveFileContains();
@@ -57,9 +61,10 @@ public class AgentBoot {
         JarFile nestedJarFile = JarUtils.getNestedJarFile(spyUrl.get(0));
         inst.appendToBootstrapClassLoaderSearch(nestedJarFile);
 
-        // 获取核心配置字符串 todo 支持命令行参数添加配置
-        final String coreFeatureString = getCoreFeatureString(agentJar);
-        // 获取配置信息
+        // 获取核心配置，核心配置优先级最高
+        final String coreFeatureString = getCoreFeatureString(agentJar, featureString);
+
+        // 获取配置
         Properties configProperties = getAgentConfigProperties(agentJar);
         final Class<?> classOfConfigure = classLoader.loadClass(CLASS_OF_CORE_CONFIGURE);
         final Object objectOfCoreConfigure = classOfConfigure.getMethod("toConfigure", String.class, Properties.class)
@@ -94,22 +99,32 @@ public class AgentBoot {
         InetSocketAddress socketAddress = (InetSocketAddress) classOfProxyServer
                 .getMethod("getLocal")
                 .invoke(objectOfProxyServer);
-        System.out.println(socketAddress);
+        System.out.println("agent服务器绑定地址:"+socketAddress);
     }
-    private static String getCoreFeatureString(File agentJar) throws IOException {
+
+    /**
+     * 获取核心配置字符串
+     * 这里是一些涉及到Agent启动的核心配置
+     */
+    private static String getCoreFeatureString(File agentJar, String featureString) throws IOException {
+        // 启动命令参数格式化为map
+        Map<String, String> featureMap = StringUtils.toFeatureMap(featureString);
+        // 获取精准化服务器ip
+        String hkServerIp = getHkServerIp(featureMap);
+        // 获取agent的服务端信息
+        String selfServerIp = getSelfIp(featureMap);
+        // sandbox目录获取
         String systemModulePath = JarUtils.getDirPath(agentJar, MODULE_JAR_PATH);
         String logConfigFilePath = getLogConfigFilePath(agentJar);
-        System.out.println("日志文件位置：" + logConfigFilePath);
-        final String sandboxHome = JarUtils.getTempFilePath();
+        String sandboxHome = JarUtils.getTempFilePath();
         // todo 暂时取消SPI
         String providerPath = "null";
         // todo 暂时取消用户模块的加载
         String userModulePath = "null";
-        return format(
-                "system_module=%s;mode=%s;sandbox_home=%s;user_module=%s;provider=%s;namespace=%s;logback_config_path=%s;",
+        final StringBuilder featureSB = new StringBuilder(format(
+                "system_module=%s;sandbox_home=%s;user_module=%s;provider=%s;namespace=%s;logback_config_path=%s;mode=agent;",
                 systemModulePath,
                 // SANDBOX_MODULE_PATH,
-                "agent",
                 sandboxHome,
                 // SANDBOX_HOME,
                 userModulePath,
@@ -117,9 +132,52 @@ public class AgentBoot {
                 // SANDBOX_PROVIDER_LIB_PATH,
                 NAME_SPACE,
                 logConfigFilePath
-        );
+        ));
+        // 将服务端ip信息添加进去
+        appendNonnullFromFeatureMap(featureSB, KEY_HK_SERVER_IP, hkServerIp);
+
+        // 将自身的ip信息添加进去
+        appendNonnullFromFeatureMap(featureSB, KEY_SERVER_IP, selfServerIp);
+
+        // 将自身的端口信息添加进去
+        appendNonnullFromFeatureMap(featureSB, KEY_SERVER_PORT, featureMap.get(KEY_SERVER_PORT));
+
+        return featureSB.toString();
     }
 
+    private static String getSelfIp(Map<String, String> featureMap) {
+
+        String featureServerIp = featureMap.get(KEY_SERVER_IP);
+        if(StringUtils.isNotBlankString(featureServerIp)){
+            return featureServerIp;
+        }
+
+        // 获取本机ip
+        return "0.0.0.0";
+    }
+
+    private static void appendNonnullFromFeatureMap(final StringBuilder featureSB,
+                                                    final String key,
+                                                    final String value) {
+        if (StringUtils.isNotBlankString(value)) {
+            featureSB.append(format("%s=%s;", key,value));
+        }
+    }
+
+    private static String getHkServerIp(Map<String, String> featureMap){
+        String hkServerIp = null;
+        // 从环境变量中读取
+        String serverIpFromEnv = System.getenv(HK_SERVER_IP_ENV_NAME);
+        if(StringUtils.isNotBlankString(serverIpFromEnv)){
+            hkServerIp = serverIpFromEnv;
+        }
+        // 从启动命令中读取
+        String serverIpFromFeature = featureMap.get(KEY_HK_SERVER_IP);
+        if(StringUtils.isNotBlankString(serverIpFromFeature)){
+            hkServerIp = serverIpFromFeature;
+        }
+        return hkServerIp;
+    }
 
     private static String getLogConfigFilePath(File agentJar) throws IOException {
         return JarUtils.findFile(agentJar, LOG_CONFIG_NAME).getAbsolutePath();
