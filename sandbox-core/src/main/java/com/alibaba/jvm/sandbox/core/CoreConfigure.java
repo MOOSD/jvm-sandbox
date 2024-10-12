@@ -59,6 +59,8 @@ public class CoreConfigure {
     private static final String KEY_HK_SERVER_IP = "hk.server.ip";
     private static final String KEY_HK_SERVER_PORT = "hk.server.port";
 
+    private static final String KEY_HK_SERVER_REGISTRY_ENABLE = "hs.server.register_enable";
+
     // 心跳检查的周期，单位是秒
     private static final String KEY_HK_HEALTH_CYCLE = "hk.health.cycle";
 
@@ -438,5 +440,14 @@ public class CoreConfigure {
 
     public String getHkServerPort() {
         return featureMap.get(KEY_HK_SERVER_PORT);
+    }
+    public Boolean hkServerRegistryEnable() {
+        String enableString = featureMap.get(KEY_HK_SERVER_REGISTRY_ENABLE);
+        return BooleanUtils.toBoolean(enableString);
+    }
+
+    public Integer getHkHealthCycle() {
+        String enableString = featureMap.get(KEY_HK_HEALTH_CYCLE);
+        return NumberUtils.toInt(enableString);
     }
 }

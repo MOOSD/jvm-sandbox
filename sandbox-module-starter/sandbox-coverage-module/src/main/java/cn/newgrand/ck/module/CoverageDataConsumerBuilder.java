@@ -6,11 +6,9 @@ import cn.newgrand.ck.pojo.ClassCoverage;
 import cn.newgrand.ck.reporter.DataReporter;
 import cn.newgrand.ck.reporter.LogDataReporter;
 import cn.newgrand.ck.pojo.MethodCoverage;
-import cn.newgrand.ck.tools.ConcurrentHashSet;
+import com.alibaba.jvm.sandbox.api.tools.ConcurrentHashSet;
 import com.alibaba.jvm.sandbox.api.resource.ConfigInfo;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 

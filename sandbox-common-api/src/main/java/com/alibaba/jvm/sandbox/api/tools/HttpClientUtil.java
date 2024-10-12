@@ -1,12 +1,12 @@
-package cn.newgrand.ck.tools;
+package com.alibaba.jvm.sandbox.api.tools;
 
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.NoHttpResponseException;
+import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.config.SocketConfig;
@@ -14,6 +14,7 @@ import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
@@ -22,9 +23,10 @@ import org.apache.http.protocol.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import java.io.IOException;
 import java.net.SocketException;
+import java.net.URISyntaxException;
+import java.util.Map;
 
 /**
  * HTTP客户端工具类
@@ -91,5 +93,22 @@ public class HttpClientUtil {
             return false;
         });
         return httpClientBuilder;
+    }
+
+    private static void PostByJson(String uri, Object requestBody, ResponseHandler<?> responseHandler) throws IOException {
+        HttpPost httpPost = new HttpPost(uri);
+        httpPost.setHeader("Content-Type", "application/json");
+        // 构造请求体
+        String jsonString = JSON.toJSONString(requestBody);
+        httpPost.setEntity(new StringEntity(jsonString));
+        httpClient.execute(httpPost,responseHandler);
+
+    }
+
+    private static void GetByQueryParam(String uri, Map<String,String> queryParam , ResponseHandler<?> responseHandler) throws IOException, URISyntaxException {
+        URIBuilder uriBuilder = new URIBuilder(uri);
+        queryParam.forEach(uriBuilder::addParameter);
+        HttpGet httpGet = new HttpGet(uriBuilder.build());
+        httpClient.execute(httpGet,responseHandler);
     }
 }

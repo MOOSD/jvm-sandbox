@@ -1,6 +1,6 @@
 package cn.newgrand.ck.reporter;
 
-import cn.newgrand.ck.tools.JSON;
+import com.alibaba.jvm.sandbox.api.tools.JSON;
 import com.alibaba.jvm.sandbox.api.resource.ConfigInfo;
 import org.apache.http.HttpResponse;
 import org.slf4j.Logger;

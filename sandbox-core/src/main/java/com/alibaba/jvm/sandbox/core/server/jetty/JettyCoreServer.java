@@ -181,8 +181,11 @@ public class JettyCoreServer implements CoreServer {
                 initJettyContextHandler();
                 httpServer.start();
             });
+            // 如果启用了注册，则进行服务注册
+            if (cfg.hkServerRegistryEnable()){
 
-            // 初始化加载所有的模块
+            }
+            // 初始化加载所有的模块,包括系统模块和管理模块
             try {
                 jvmSandbox.getCoreModuleManager().reset();
             } catch (Throwable cause) {

@@ -4,13 +4,11 @@ package cn.newgrand.ck.module;
 
 import cn.newgrand.ck.executor.*;
 import cn.newgrand.ck.pojo.MethodCoverage;
-import cn.newgrand.ck.tools.JSON;
 import com.alibaba.jvm.sandbox.api.Information;
 import com.alibaba.jvm.sandbox.api.LoadCompleted;
 import com.alibaba.jvm.sandbox.api.Module;
 import com.alibaba.jvm.sandbox.api.listener.ext.Advice;
 import com.alibaba.jvm.sandbox.api.listener.ext.AdviceListener;
-import com.alibaba.jvm.sandbox.api.listener.ext.Behavior;
 import com.alibaba.jvm.sandbox.api.listener.ext.EventWatchBuilder;
 import com.alibaba.jvm.sandbox.api.resource.ConfigInfo;
 import com.alibaba.jvm.sandbox.api.resource.ModuleEventWatcher;
@@ -85,7 +83,7 @@ public class CodeCoverageModule implements Module, LoadCompleted {
 
     //构建匹配类的正则表达式
     private String buildClassPattern() {
-        return "^cn\\.newgrand\\.ck.*";
+        return "^cn\\.newgrand\\.*";
     }
 
     private void initModule(){

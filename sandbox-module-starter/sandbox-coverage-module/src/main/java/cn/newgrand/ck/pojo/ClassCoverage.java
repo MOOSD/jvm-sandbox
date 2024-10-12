@@ -1,8 +1,6 @@
 package cn.newgrand.ck.pojo;
 
-import cn.newgrand.ck.tools.ConcurrentHashSet;
-
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.alibaba.jvm.sandbox.api.tools.ConcurrentHashSet;
 
 /**
  * 方法的覆盖率信息
