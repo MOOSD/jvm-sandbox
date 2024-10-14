@@ -29,7 +29,7 @@ public class CodeCoverageModule implements Module, LoadCompleted {
     @Resource
     private ConfigInfo configInfo;
 
-    private AsyncDataExecutor<MethodCoverage> dataExecutor;
+    private AsyncDataExecutor<MethodCoverage> methodCoverageDataExecutor;
 
     private CoverageDataConsumerBuilder coverageDataConsumerBuilder;
 
@@ -64,13 +64,13 @@ public class CodeCoverageModule implements Module, LoadCompleted {
 
             @Override
             protected void after(Advice advice) {
-                dataExecutor.put(advice.attachment());
+                methodCoverageDataExecutor.put(advice.attachment());
             }
 
 
         };
         // 激活executor
-        dataExecutor.active();
+        methodCoverageDataExecutor.active();
 
         // 开启监听
         new EventWatchBuilder(moduleEventWatcher, EventWatchBuilder.PatternType.REGEX)//一定要选择这种表达式模式
@@ -79,19 +79,20 @@ public class CodeCoverageModule implements Module, LoadCompleted {
                 .onWatching()
                 .withLine()//有它，才能获取到行号
                 .onWatch(adviceListener);
+        log.info("覆盖率模块加载完成");
     }
 
     //构建匹配类的正则表达式
     private String buildClassPattern() {
-        return "^cn\\.newgrand\\.*";
+        return "^cn\\.newgrand.*";
     }
 
     private void initModule(){
-        log.info("覆盖率模块加载中");
+        log.info("覆盖率模块加载开始");
         // 创建数据消费者
         this.coverageDataConsumerBuilder = new CoverageDataConsumerBuilder(configInfo);
         // 初始化dataExecutor
-        this.dataExecutor = new AsyncDataExecutor<>(10240,2, coverageDataConsumerBuilder);
+        this.methodCoverageDataExecutor = new AsyncDataExecutor<>(10240,2, coverageDataConsumerBuilder);
     }
 
 }

@@ -8,12 +8,17 @@ import cn.newgrand.ck.reporter.LogDataReporter;
 import cn.newgrand.ck.pojo.MethodCoverage;
 import com.alibaba.jvm.sandbox.api.tools.ConcurrentHashSet;
 import com.alibaba.jvm.sandbox.api.resource.ConfigInfo;
+import com.alibaba.jvm.sandbox.api.tools.JSON;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 public class CoverageDataConsumerBuilder implements ConsumerBuilder<MethodCoverage> {
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final DataReporter dataReporter;
     /**
