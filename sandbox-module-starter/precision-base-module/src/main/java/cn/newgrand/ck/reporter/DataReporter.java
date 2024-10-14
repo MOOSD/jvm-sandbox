@@ -4,13 +4,9 @@ import org.apache.http.HttpResponse;
 
 import java.util.function.Consumer;
 
-public abstract class DataReporter {
+public abstract class DataReporter<T> {
 
-    public void report(Object data) {
-        report(data,(response)->{});
-    }
-
-    public abstract void report(Object data, Consumer<HttpResponse> responseConsumer);
+    public abstract T report(Object data);
 
 
 }

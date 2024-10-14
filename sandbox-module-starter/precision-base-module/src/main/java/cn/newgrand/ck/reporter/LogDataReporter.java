@@ -6,9 +6,10 @@ import org.apache.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
-public class LogDataReporter extends DataReporter {
+public class LogDataReporter extends DataReporter<Object> {
     private final Logger logger = LoggerFactory.getLogger(LogDataReporter.class);
     private final ConfigInfo configInfo;
 
@@ -16,13 +17,8 @@ public class LogDataReporter extends DataReporter {
         this.configInfo = configInfo;
     }
 
-    @Override
-    public void report(Object data) {
-        report(data,(response)->{});
-    }
-
-    @Override
-    public void report(Object data, Consumer<HttpResponse> responseConsumer){
+    public Object report(Object data){
         logger.info("处理后的数据:{}", JSON.toJSONString(data));
+        return null;
     }
 }

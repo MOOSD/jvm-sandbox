@@ -11,7 +11,7 @@ import org.apache.http.entity.StringEntity;
 import java.io.IOException;
 import java.util.function.Consumer;
 
-public class HttpDataReporter extends DataReporter {
+public class HttpDataReporter extends DataReporter<HttpResponse> {
 
     private final ConfigInfo configInfo;
     private final String url;
@@ -22,10 +22,10 @@ public class HttpDataReporter extends DataReporter {
     }
 
     @Override
-    public void report(Object data, Consumer<HttpResponse> responseConsumer){
+    public HttpResponse report(Object data){
         try(CloseableHttpResponse closeableHttpResponse = reportByPost(data)){
 
-            responseConsumer.accept(closeableHttpResponse);
+            return closeableHttpResponse;
 
         } catch (IOException e) {
             throw new RuntimeException(e);
