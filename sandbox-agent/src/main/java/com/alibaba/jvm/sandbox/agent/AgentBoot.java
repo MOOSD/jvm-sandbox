@@ -48,7 +48,7 @@ public class AgentBoot {
     private static final String KEY_AGENT_NAME = "agent.name";
     private static final String KEY_AGENT_ENV_NAME = "agent.env.name";
     private static final String HK_SERVER_IP_ENV_NAME = "HK_SERVER_IP";
-    private static final String HK_AGENT_NAME_ENV_NAME = "HK_AGENT_NAME";
+    private static final String[] HK_AGENT_NAME_ENV_NAMES = {"SW_AGENT_NAME","HK_AGENT_NAME"};
     private static final String HK_ENV_NAME_ENV_NAME = "HK_ENV_NAME";
 
     public static void premain(String featureString, Instrumentation inst) throws Exception {
@@ -180,10 +180,13 @@ public class AgentBoot {
         }
 
         // 从启动命令中获取
-        String agentNameFromENV = System.getenv(HK_AGENT_NAME_ENV_NAME);
-        if(StringUtils.isNotBlankString(agentNameFromENV)){
-            agentName = agentNameFromENV;
+        for (String hkAgentNameEnvName : HK_AGENT_NAME_ENV_NAMES) {
+            String agentNameFromENV = System.getenv(hkAgentNameEnvName);
+            if(StringUtils.isNotBlankString(agentNameFromENV)){
+                agentName = agentNameFromENV;
+            }
         }
+
 
         return agentName;
     }
