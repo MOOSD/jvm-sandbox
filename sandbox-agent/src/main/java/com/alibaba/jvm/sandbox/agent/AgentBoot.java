@@ -45,7 +45,11 @@ public class AgentBoot {
     private static final String KEY_HK_SERVER_IP = "hk.server.ip";
     private static final String KEY_SERVER_IP = "server.ip";
     private static final String KEY_SERVER_PORT = "server.port";
+    private static final String KEY_AGENT_NAME = "agent.name";
+    private static final String KEY_AGENT_ENV_NAME = "agent.env.name";
     private static final String HK_SERVER_IP_ENV_NAME = "HK_SERVER_IP";
+    private static final String HK_AGENT_NAME_ENV_NAME = "HK_AGENT_NAME";
+    private static final String HK_ENV_NAME_ENV_NAME = "HK_ENV_NAME";
 
     public static void premain(String featureString, Instrumentation inst) throws Exception {
         final File agentJar = getArchiveFileContains();
@@ -61,11 +65,12 @@ public class AgentBoot {
         JarFile nestedJarFile = JarUtils.getNestedJarFile(spyUrl.get(0));
         inst.appendToBootstrapClassLoaderSearch(nestedJarFile);
 
-        // 获取核心配置，核心配置优先级最高
-        final String coreFeatureString = getCoreFeatureString(agentJar, featureString);
-
-        // 获取配置
+        // 读取配置文件/manifest文件中中的配置
         Properties configProperties = getAgentConfigProperties(agentJar);
+
+        // 获取核心配置，核心配置优先级最高
+        final String coreFeatureString = getCoreFeatureString(agentJar, featureString, configProperties);
+
         final Class<?> classOfConfigure = classLoader.loadClass(CLASS_OF_CORE_CONFIGURE);
         final Object objectOfCoreConfigure = classOfConfigure.getMethod("toConfigure", String.class, Properties.class)
                 .invoke(null, coreFeatureString, configProperties);
@@ -106,7 +111,7 @@ public class AgentBoot {
      * 获取核心配置字符串
      * 这里是一些涉及到Agent启动的核心配置
      */
-    private static String getCoreFeatureString(File agentJar, String featureString) throws IOException {
+    private static String getCoreFeatureString(File agentJar, String featureString, Properties configProperties) throws IOException {
         // 启动命令参数格式化为map
         Map<String, String> featureMap = StringUtils.toFeatureMap(featureString);
         // 获取精准化服务器ip
@@ -116,6 +121,11 @@ public class AgentBoot {
         // sandbox目录获取
         String systemModulePath = JarUtils.getDirPath(agentJar, MODULE_JAR_PATH);
         String logConfigFilePath = getLogConfigFilePath(agentJar);
+        // 获取环境名称
+        String envName = getEnvName(featureMap);
+        // 获取agentName
+        String agentName = getAgentName(configProperties.getProperty("mf.artifact-Id"), featureMap);
+
         String sandboxHome = JarUtils.getTempFilePath();
         // todo 暂时取消SPI
         String providerPath = "null";
@@ -142,7 +152,56 @@ public class AgentBoot {
         // 将自身的端口信息添加进去
         appendNonnullFromFeatureMap(featureSB, KEY_SERVER_PORT, featureMap.get(KEY_SERVER_PORT));
 
+        // 添加agentName信息
+        appendNonnullFromFeatureMap(featureSB, KEY_AGENT_NAME, agentName);
+
+        // 添加环境信息
+        appendNonnullFromFeatureMap(featureSB, KEY_AGENT_ENV_NAME, agentName);
         return featureSB.toString();
+    }
+
+    private static String getEnvName(Map<String, String> featureMap) {
+        return getConfigFromFeatureMapAndEnv(KEY_AGENT_ENV_NAME, HK_ENV_NAME_ENV_NAME, featureMap);
+    }
+
+
+
+    private static String getAgentName(String artifactId, Map<String, String> featureString) {
+        String agentName = null;
+        // 从artifactId获取
+        if(StringUtils.isNotBlankString(artifactId)){
+            agentName = artifactId;
+        }
+        // 从主机名称中获取
+        try {
+            agentName = InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            // do nothing
+        }
+
+        // 从启动命令中获取
+        String agentNameFromENV = System.getenv(HK_AGENT_NAME_ENV_NAME);
+        if(StringUtils.isNotBlankString(agentNameFromENV)){
+            agentName = agentNameFromENV;
+        }
+
+        return agentName;
+    }
+
+    private static String getConfigFromFeatureMapAndEnv(String configKey, String envName,  Map<String, String> featureMap){
+        // 优先命令行中获取
+        String featureValue = featureMap.get(configKey);
+        if (StringUtils.isNotBlankString(featureValue)){
+            return featureValue;
+        }
+
+        // 从环境变量中获取
+        String envValue = System.getenv(envName);
+        if (StringUtils.isNotBlankString(envValue)){
+            return envValue;
+        }
+
+        return null;
     }
 
     private static String getSelfIp(Map<String, String> featureMap) {
@@ -165,18 +224,7 @@ public class AgentBoot {
     }
 
     private static String getHkServerIp(Map<String, String> featureMap){
-        String hkServerIp = null;
-        // 从环境变量中读取
-        String serverIpFromEnv = System.getenv(HK_SERVER_IP_ENV_NAME);
-        if(StringUtils.isNotBlankString(serverIpFromEnv)){
-            hkServerIp = serverIpFromEnv;
-        }
-        // 从启动命令中读取
-        String serverIpFromFeature = featureMap.get(KEY_HK_SERVER_IP);
-        if(StringUtils.isNotBlankString(serverIpFromFeature)){
-            hkServerIp = serverIpFromFeature;
-        }
-        return hkServerIp;
+        return getConfigFromFeatureMapAndEnv(KEY_HK_SERVER_IP,HK_SERVER_IP_ENV_NAME,featureMap);
     }
 
     private static String getLogConfigFilePath(File agentJar) throws IOException {

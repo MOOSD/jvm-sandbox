@@ -210,4 +210,16 @@ public interface ConfigInfo {
     String getHkServerIp();
 
     String getHkServerPort();
+
+    String getAgentName();
+
+    String getAgentEnvName();
+
+    String getEnvName();
+
+    String getGitId();
+
+    String getDomainId();
+
+    String getProjectId();
 }

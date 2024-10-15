@@ -41,6 +41,16 @@ public class CoreConfigure {
     private static final String KEY_NATIVE_SUPPORTED = "native.supported";
 
     /**
+     * 服务信息
+     */
+    private static final String KEY_AGENT_NAME = "agent.name";
+
+    /**
+     * agent运行的环境
+     */
+    private static final String KEY_AGENT_ENV_NAME = "agent.env.name";
+
+    /**
      * manifest文件中的内容
      */
     private static final String KEY_MF_BUILD_TIME = "mf.build-time";
@@ -64,6 +74,13 @@ public class CoreConfigure {
     // 心跳检查的周期，单位是秒
     private static final String KEY_HK_HEALTH_CYCLE = "hk.health.cycle";
 
+    /**
+     * 非配置文件中的内容
+     */
+    private static final String KEY_PROJECT_ID = "hk.project.id";
+    private static final String KEY_GIT_ID = "hk.git.Id";
+    private static final String KEY_DOMAIN_ID = "hk.dimain.id";
+
 
 
     // 受保护key数组，在保护key范围之内，以用户传递的配置为准，系统配置不允许覆盖
@@ -75,8 +92,7 @@ public class CoreConfigure {
     private static final FeatureCodec codec = new FeatureCodec(';', '=');
 
     private final Map<String, String> featureMap = new LinkedHashMap<>();
-
-
+    
 
     private CoreConfigure(final String featureString,
                           final String propertiesFilePath) {
@@ -446,8 +462,40 @@ public class CoreConfigure {
         return BooleanUtils.toBoolean(enableString);
     }
 
-    public Integer getHkHealthCycle() {
+    public Integer getHkHealthCheckCycle() {
         String enableString = featureMap.get(KEY_HK_HEALTH_CYCLE);
         return NumberUtils.toInt(enableString);
     }
+
+    public String getAgentName(){
+        return featureMap.get(KEY_AGENT_NAME);
+    }
+
+    public String getAgentEnvName(){
+        return featureMap.get(KEY_AGENT_ENV_NAME);
+    }
+
+    public String getProjectId() {
+        return featureMap.get(KEY_PROJECT_ID);
+    }
+
+    public String getDomainId() {
+        return featureMap.get(KEY_DOMAIN_ID);
+    }
+
+    public String getGitId() {
+        return featureMap.get(KEY_GIT_ID);
+    }
+    public void setProjectId(String projectId) {
+        featureMap.put(KEY_PROJECT_ID, projectId);
+    }
+
+    public void setGitId(String gitId) {
+        featureMap.put(KEY_GIT_ID, gitId);
+    }
+
+    public void setDomainId(String domainId) {
+        featureMap.put(KEY_PROJECT_ID, domainId);
+    }
+
 }

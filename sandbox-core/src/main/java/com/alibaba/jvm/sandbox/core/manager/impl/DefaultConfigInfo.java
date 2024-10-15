@@ -193,4 +193,35 @@ class DefaultConfigInfo implements ConfigInfo {
         return cfg.getHkServerPort();
     }
 
+    @Override
+    public String getAgentName(){
+        return cfg.getAgentName();
+    }
+
+    @Override
+    public String getAgentEnvName(){
+        return cfg.getAgentEnvName();
+    }
+
+    @Override
+    public String getEnvName(){
+        return cfg.getAgentEnvName();
+    }
+
+    @Override
+    public String getGitId(){
+        return cfg.getGitId();
+    }
+
+    @Override
+    public String getDomainId(){
+        return cfg.getDomainId();
+    }
+
+    @Override
+    public String getProjectId(){
+        return cfg.getProjectId();
+    }
+
+
 }

@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public class LogDataReporter extends DataReporter<Object> {
+public class LogDataReporter extends DataReporter {
     private final Logger logger = LoggerFactory.getLogger(LogDataReporter.class);
     private final ConfigInfo configInfo;
 
@@ -17,8 +17,8 @@ public class LogDataReporter extends DataReporter<Object> {
         this.configInfo = configInfo;
     }
 
-    public Object report(Object data){
-        logger.info("处理后的数据:{}", JSON.toJSONString(data));
-        return null;
+    public ReportResult report(Object data){
+        logger.info("上报的的数据:{}", JSON.toJSONString(data));
+        return new ReportResult(true);
     }
 }

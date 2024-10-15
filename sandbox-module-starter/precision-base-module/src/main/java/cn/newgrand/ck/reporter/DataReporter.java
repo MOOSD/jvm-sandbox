@@ -4,9 +4,12 @@ import org.apache.http.HttpResponse;
 
 import java.util.function.Consumer;
 
-public abstract class DataReporter<T> {
+/**
+ * 数据上报器
+ */
+public abstract class DataReporter {
 
-    public abstract T report(Object data);
+    public abstract ReportResult report(Object data);
 
 
 }

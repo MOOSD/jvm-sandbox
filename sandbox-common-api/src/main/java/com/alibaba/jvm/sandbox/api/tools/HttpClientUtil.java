@@ -2,8 +2,8 @@ package com.alibaba.jvm.sandbox.api.tools;
 
 
 import org.apache.http.NoHttpResponseException;
-import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.net.SocketException;
 import java.net.URISyntaxException;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * HTTP客户端工具类
@@ -95,20 +96,22 @@ public class HttpClientUtil {
         return httpClientBuilder;
     }
 
-    private static void PostByJson(String uri, Object requestBody, ResponseHandler<?> responseHandler) throws IOException {
+    public static CloseableHttpResponse PostByJson(String uri, Object requestBody) throws IOException {
         HttpPost httpPost = new HttpPost(uri);
         httpPost.setHeader("Content-Type", "application/json");
         // 构造请求体
         String jsonString = JSON.toJSONString(requestBody);
         httpPost.setEntity(new StringEntity(jsonString));
-        httpClient.execute(httpPost,responseHandler);
+        return httpClient.execute(httpPost);
 
     }
 
-    private static void GetByQueryParam(String uri, Map<String,String> queryParam , ResponseHandler<?> responseHandler) throws IOException, URISyntaxException {
+    public static CloseableHttpResponse GetByQueryParam(String uri, Map<String,String> queryParam) throws IOException, URISyntaxException {
         URIBuilder uriBuilder = new URIBuilder(uri);
-        queryParam.forEach(uriBuilder::addParameter);
+        if (Objects.nonNull(queryParam)){
+            queryParam.forEach(uriBuilder::addParameter);
+        }
         HttpGet httpGet = new HttpGet(uriBuilder.build());
-        httpClient.execute(httpGet,responseHandler);
+        return httpClient.execute(httpGet);
     }
 }
