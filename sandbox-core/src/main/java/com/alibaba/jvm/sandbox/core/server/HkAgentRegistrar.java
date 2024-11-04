@@ -2,7 +2,8 @@ package com.alibaba.jvm.sandbox.core.server;
 
 
 import cn.newgrand.ck.constant.ApiPathConstant;
-import cn.newgrand.ck.entity.RegisterRequest;
+
+import cn.newgrand.ck.entity.request.RegisterRequest;
 import com.alibaba.jvm.sandbox.api.tools.HkUtils;
 import com.alibaba.jvm.sandbox.api.tools.HttpClientUtil;
 import com.alibaba.jvm.sandbox.core.CoreConfigure;
