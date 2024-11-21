@@ -39,9 +39,10 @@ public class CoreConfigure {
 
     private static final String KEY_UNSAFE_ENABLE = "unsafe.enable";
     private static final String KEY_NATIVE_SUPPORTED = "native.supported";
+    private static final String KEY_HOST_NAME = "host.name";
 
     /**
-     * 服务信息
+     * 服务名称
      */
     private static final String KEY_AGENT_NAME = "agent.name";
 
@@ -92,18 +93,24 @@ public class CoreConfigure {
     private static final FeatureCodec codec = new FeatureCodec(';', '=');
 
     private final Map<String, String> featureMap = new LinkedHashMap<>();
+
+    private String instanceId;
     
 
     private CoreConfigure(final String featureString,
                           final String propertiesFilePath) {
         final Map<String, String> featureMap = toFeatureMap(featureString);
         final Map<String, String> propertiesMap = toPropertiesMap(propertiesFilePath);
-        this.featureMap.putAll(merge(featureMap, propertiesMap));
+        initConfig(featureMap, propertiesMap);
     }
 
     private CoreConfigure(final String featureString, final Properties properties) {
         final Map<String, String> featureMap = toFeatureMap(featureString);
         final Map<String, String> propertiesMap = propertiesToMap(properties);
+        initConfig(featureMap, propertiesMap);
+    }
+    private void initConfig(Map<String, String> featureMap, Map<String, String> propertiesMap ){
+        this.instanceId = String.valueOf(UUID.randomUUID());
         this.featureMap.putAll(merge(featureMap, propertiesMap));
     }
 
@@ -485,6 +492,13 @@ public class CoreConfigure {
 
     public String getGitId() {
         return featureMap.get(KEY_GIT_ID);
+    }
+
+    public String getInstanceId() {
+        return instanceId;
+    }
+    public String getHostName(){
+        return featureMap.get(KEY_HOST_NAME);
     }
     public void setProjectId(String projectId) {
         featureMap.put(KEY_PROJECT_ID, projectId);

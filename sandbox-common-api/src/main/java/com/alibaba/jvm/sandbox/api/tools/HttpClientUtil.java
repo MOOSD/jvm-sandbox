@@ -1,6 +1,8 @@
 package com.alibaba.jvm.sandbox.api.tools;
 
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.apache.http.HttpHost;
 import org.apache.http.NoHttpResponseException;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -14,6 +16,7 @@ import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -24,8 +27,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.SocketException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
 
@@ -57,7 +63,6 @@ public class HttpClientUtil {
         connectionManager.setDefaultMaxPerRoute(MAX_PER_ROUTE);
         //服务器返回数据(response)的时间，超过该时间抛出read timeout
         connectionManager.setDefaultSocketConfig(SocketConfig.custom().setSoTimeout(SOCKET_TIMEOUT).build());
-
         RequestConfig requestConfig = RequestConfig.custom()
                 //连接上服务器(握手成功)的时间，超出该时间抛出connect timeout
                 .setConnectTimeout(CONNECT_TIMEOUT)
@@ -96,14 +101,52 @@ public class HttpClientUtil {
         return httpClientBuilder;
     }
 
-    public static CloseableHttpResponse PostByJson(String uri, Object requestBody) throws IOException {
+    public static <T>  T postByJson(String uri, Object requestBody, TypeReference<T> responseType) throws IOException {
+        String responseJson = postByJsonStr(uri, requestBody);
+        if (responseJson == null){
+            return null;
+        }
+        return JSON.parseObject(responseJson,responseType);
+    }
+
+    public static void postByJson(String uri, Object requestBody) throws IOException {
+        postByJsonStr(uri, requestBody);
+
+    }
+
+    public static <T>  T postByJson(String uri, Object requestBody, Class<T> responseType) throws IOException {
+        String responseJson = postByJsonStr(uri, requestBody);
+        if (responseJson == null){
+            return null;
+        }
+        return JSON.parseObject(responseJson, responseType);
+    }
+
+    private static String postByJsonStr(String uri, Object requestBody) throws IOException{
         HttpPost httpPost = new HttpPost(uri);
         httpPost.setHeader("Content-Type", "application/json");
         // 构造请求体
         String jsonString = JSON.toJSONString(requestBody);
-        httpPost.setEntity(new StringEntity(jsonString));
-        return httpClient.execute(httpPost);
+        httpPost.setEntity(new StringEntity(jsonString, ContentType.APPLICATION_JSON));
 
+        StringBuilder responseBodyStr = new StringBuilder();
+        try(CloseableHttpResponse response = httpClient.execute(httpPost)){
+            // 无响应体直接返回
+            if (response.getEntity() == null) {
+                log.info("无响应体：{}", uri);
+                return null;
+            }
+            InputStream responseInputStream = response.getEntity().getContent();
+            InputStreamReader inputStreamReader = new InputStreamReader(responseInputStream, StandardCharsets.UTF_8);
+            char[] charsBuffer = new char[200];
+            int readLength;
+            while((readLength = inputStreamReader.read(charsBuffer)) > 0){
+                responseBodyStr.append(charsBuffer,0, readLength);
+            }
+            inputStreamReader.close();
+        }
+        log.info("URL:{},响应:{}",uri, responseBodyStr);
+        return responseBodyStr.toString();
     }
 
     public static CloseableHttpResponse GetByQueryParam(String uri, Map<String,String> queryParam) throws IOException, URISyntaxException {

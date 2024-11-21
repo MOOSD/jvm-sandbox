@@ -46,9 +46,10 @@ public class AgentBoot {
     private static final String KEY_SERVER_IP = "server.ip";
     private static final String KEY_SERVER_PORT = "server.port";
     private static final String KEY_AGENT_NAME = "agent.name";
+    private static final String KEY_HOST_NAME = "host.name";
     private static final String KEY_AGENT_ENV_NAME = "agent.env.name";
     private static final String HK_SERVER_IP_ENV_NAME = "HK_SERVER_IP";
-    private static final String[] HK_AGENT_NAME_ENV_NAMES = {"SW_AGENT_NAME","HK_AGENT_NAME"};
+    private static final String[] HK_AGENT_NAME_ENV_NAMES = {"HK_AGENT_NAME","SW_AGENT_NAME"};
     private static final String HK_ENV_NAME_ENV_NAME = "HK_ENV_NAME";
 
     public static void premain(String featureString, Instrumentation inst) throws Exception {
@@ -100,11 +101,6 @@ public class AgentBoot {
 
         }
 
-        // 返回服务器绑定的地址
-        InetSocketAddress socketAddress = (InetSocketAddress) classOfProxyServer
-                .getMethod("getLocal")
-                .invoke(objectOfProxyServer);
-        System.out.println("agent服务器绑定地址:"+socketAddress);
     }
 
     /**
@@ -114,18 +110,9 @@ public class AgentBoot {
     private static String getCoreFeatureString(File agentJar, String featureString, Properties configProperties) throws IOException {
         // 启动命令参数格式化为map
         Map<String, String> featureMap = StringUtils.toFeatureMap(featureString);
-        // 获取精准化服务器ip
-        String hkServerIp = getHkServerIp(featureMap);
-        // 获取agent的服务端信息
-        String selfServerIp = getSelfIp(featureMap);
         // sandbox目录获取
         String systemModulePath = JarUtils.getDirPath(agentJar, MODULE_JAR_PATH);
         String logConfigFilePath = getLogConfigFilePath(agentJar);
-        // 获取环境名称
-        String envName = getEnvName(featureMap);
-        // 获取agentName
-        String agentName = getAgentName(configProperties.getProperty("mf.artifact-Id"), featureMap);
-
         String sandboxHome = JarUtils.getTempFilePath();
         // todo 暂时取消SPI
         String providerPath = "null";
@@ -144,19 +131,22 @@ public class AgentBoot {
                 logConfigFilePath
         ));
         // 将服务端ip信息添加进去
-        appendNonnullFromFeatureMap(featureSB, KEY_HK_SERVER_IP, hkServerIp);
+        appendNonnullFromFeatureMap(featureSB, KEY_HK_SERVER_IP, getHkServerIp(featureMap));
 
         // 将自身的ip信息添加进去
-        appendNonnullFromFeatureMap(featureSB, KEY_SERVER_IP, selfServerIp);
+        appendNonnullFromFeatureMap(featureSB, KEY_SERVER_IP,  getSelfIp(featureMap));
 
         // 将自身的端口信息添加进去
         appendNonnullFromFeatureMap(featureSB, KEY_SERVER_PORT, featureMap.get(KEY_SERVER_PORT));
 
-        // 添加agentName信息
-        appendNonnullFromFeatureMap(featureSB, KEY_AGENT_NAME, agentName);
-
         // 添加环境信息
-        appendNonnullFromFeatureMap(featureSB, KEY_AGENT_ENV_NAME, agentName);
+        appendNonnullFromFeatureMap(featureSB, KEY_AGENT_ENV_NAME, getEnvName(featureMap));
+
+        // 添加agentName信息
+        appendNonnullFromFeatureMap(featureSB, KEY_AGENT_NAME, getAgentName(configProperties.getProperty("mf.artifact-Id")));
+
+        // 添加主机名信息
+        appendNonnullFromFeatureMap(featureSB, KEY_HOST_NAME, getHostName());
         return featureSB.toString();
     }
 
@@ -165,30 +155,46 @@ public class AgentBoot {
     }
 
 
-
-    private static String getAgentName(String artifactId, Map<String, String> featureString) {
-        String agentName = null;
-        // 从artifactId获取
-        if(StringUtils.isNotBlankString(artifactId)){
-            agentName = artifactId;
-        }
-        // 从主机名称中获取
-        try {
-            agentName = InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException e) {
-            // do nothing
-        }
-
+    /**
+     * agentName是服务的业务唯一标识
+     */
+    private static String getAgentName(String artifactId) {
+        String agentName;
         // 从启动命令中获取
         for (String hkAgentNameEnvName : HK_AGENT_NAME_ENV_NAMES) {
             String agentNameFromENV = System.getenv(hkAgentNameEnvName);
             if(StringUtils.isNotBlankString(agentNameFromENV)){
                 agentName = agentNameFromENV;
+                return agentName;
             }
         }
 
+        // 用项目的artifactId
+        if(StringUtils.isNotBlankString(artifactId)){
+            agentName = artifactId;
+            return agentName;
+        }
+        // 用主机名
+        String hostName = getHostName();
+        if(StringUtils.isNotBlankString(hostName)){
+            agentName = hostName;
+            return agentName;
+        }
+        return null;
+    }
 
-        return agentName;
+    /**
+     * 获取主机名
+     */
+    private static String getHostName() {
+        String hostName = null;
+        // 从主机名称中获取
+        try {
+            hostName = InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            // do nothing
+        }
+        return hostName;
     }
 
     private static String getConfigFromFeatureMapAndEnv(String configKey, String envName,  Map<String, String> featureMap){
@@ -227,7 +233,7 @@ public class AgentBoot {
     }
 
     private static String getHkServerIp(Map<String, String> featureMap){
-        return getConfigFromFeatureMapAndEnv(KEY_HK_SERVER_IP,HK_SERVER_IP_ENV_NAME,featureMap);
+        return getConfigFromFeatureMapAndEnv(KEY_HK_SERVER_IP,HK_SERVER_IP_ENV_NAME, featureMap);
     }
 
     private static String getLogConfigFilePath(File agentJar) throws IOException {
@@ -298,18 +304,21 @@ public class AgentBoot {
 
     private static synchronized void getJarInfoFroManifest(Properties properties) throws IOException {
         Enumeration<URL> systemResources = ClassLoader.getSystemResources(MENI_FEST_PATH);
-        if (systemResources.hasMoreElements()) {
-            URL url = systemResources.nextElement();
-            Manifest manifest = new Manifest(url.openStream());
-            Attributes mainAttributes = manifest.getMainAttributes();
-            MF_KEY_MAP.forEach((left,right)-> {
-                String mfValue = mainAttributes.getValue(right);
-                if (Objects.isNull(mfValue)){
-                    return;
-                }
-                properties.setProperty(left,mfValue);
-            });
+        if (!systemResources.hasMoreElements()) {
+            System.out.println("未找到项目的清单文件（MANIFEST.MF）");
         }
+        // 默认取第一个清单文件
+        URL url = systemResources.nextElement();
+        Manifest manifest = new Manifest(url.openStream());
+        Attributes mainAttributes = manifest.getMainAttributes();
+        MF_KEY_MAP.forEach((left,right)-> {
+            String mfValue = mainAttributes.getValue(right);
+            if (Objects.isNull(mfValue)){
+                return;
+            }
+            properties.setProperty(left,mfValue);
+        });
+
     }
 
 

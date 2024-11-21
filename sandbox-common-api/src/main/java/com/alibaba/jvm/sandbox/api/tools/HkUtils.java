@@ -4,7 +4,7 @@ public class HkUtils {
 
     public static String getUrl(String host, String port, String uri){
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(host).append(':').append(port);
+        stringBuilder.append("http://").append(host).append(':').append(port);
 
         if(!uri.startsWith("/")){
             stringBuilder.append('/');

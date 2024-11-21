@@ -3,6 +3,7 @@ package com.alibaba.jvm.sandbox.core.server.jetty;
 import com.alibaba.jvm.sandbox.core.CoreConfigure;
 import com.alibaba.jvm.sandbox.core.JvmSandbox;
 import com.alibaba.jvm.sandbox.core.server.CoreServer;
+import com.alibaba.jvm.sandbox.core.server.HkAgentRegistrar;
 import com.alibaba.jvm.sandbox.core.server.jetty.servlet.ModuleHttpServlet;
 import com.alibaba.jvm.sandbox.core.server.jetty.servlet.WebSocketAcceptorServlet;
 import com.alibaba.jvm.sandbox.core.util.Initializer;
@@ -39,6 +40,7 @@ public class JettyCoreServer implements CoreServer {
     private CoreConfigure cfg;
     private JvmSandbox jvmSandbox;
 
+    private HkAgentRegistrar hkAgentRegistrar;
     /**
      * 单例
      *
@@ -174,7 +176,7 @@ public class JettyCoreServer implements CoreServer {
         this.cfg = cfg;
         try {
             initializer.initProcess(() -> {
-                LogbackUtils.init(cfg.getNamespace(),cfg.getLogBackPath());
+                LogbackUtils.init(cfg.getNamespace(), cfg.getLogBackPath());
                 logger.info("initializing server. cfg={}", cfg);
                 jvmSandbox = new JvmSandbox(cfg, inst);
                 initHttpServer();
@@ -183,7 +185,8 @@ public class JettyCoreServer implements CoreServer {
             });
             // 如果启用了注册，则进行服务注册
             if (cfg.hkServerRegistryEnable()){
-
+                hkAgentRegistrar = new HkAgentRegistrar(cfg);
+                hkAgentRegistrar.register();
             }
             // 初始化加载所有的模块,包括系统模块和管理模块
             try {
@@ -193,20 +196,17 @@ public class JettyCoreServer implements CoreServer {
             }
 
             final InetSocketAddress local = getLocal();
-            logger.info("initialized server. actual bind to {}:{}",
-                    local.getHostName(),
-                    local.getPort()
-            );
+            String bindMessage = "initialized agent server. actual bind to " +local.getHostName()+ ":" +local.getPort();
+            logger.info(bindMessage);
+            System.out.println(bindMessage);
 
         } catch (Throwable cause) {
-
             // 这里会抛出到目标应用层，所以在这里留下错误信息
-            logger.warn("initialize server failed.", cause);
-
+            logger.warn("initialize server failed.");
+            logger.error("server bind failed.", cause);
             // 对外抛出到目标应用中
-            throw new IOException("server bind failed.", cause);
+//            throw new IOException("server bind failed.", cause);
         }
-
         logger.info("{} bind success.", this);
     }
 
