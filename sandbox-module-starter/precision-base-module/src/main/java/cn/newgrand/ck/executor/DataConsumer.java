@@ -1,11 +1,28 @@
 package cn.newgrand.ck.executor;
 
+import java.util.UUID;
 
-public interface DataConsumer<T> {
+/**
+ * 数据消费者
+ * @param <T> 要消费的数据类型
+ */
+public abstract class DataConsumer<T> {
 
+    public final String id = UUID.randomUUID().toString();
 
     /**
-     * 每一个数据消费者的消费逻辑，会被持续的循环调用
+     * 数据处理器的回调
      */
-    void comsumer(T data);
+    protected ProcessorCallBack<T> processorCallBack;
+
+    /**
+     * 数据处理逻辑
+     */
+    abstract public void consume(T data);
+
+    /**
+     * 处理器是否可用
+     */
+    abstract public boolean isAvailable();
+
 }

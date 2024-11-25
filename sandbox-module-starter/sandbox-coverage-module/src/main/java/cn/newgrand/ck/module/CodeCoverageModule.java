@@ -29,9 +29,7 @@ public class CodeCoverageModule implements Module, LoadCompleted {
     @Resource
     private ConfigInfo configInfo;
 
-    private AsyncDataExecutor<MethodCoverage> methodCoverageDataExecutor;
-
-    private CoverageDataConsumerBuilder coverageDataConsumerBuilder;
+    private CoverageDataProcessor coverageDataProcessor;
 
     /**
      * 按照方法级别手机覆盖率信息
@@ -64,13 +62,13 @@ public class CodeCoverageModule implements Module, LoadCompleted {
 
             @Override
             protected void after(Advice advice) {
-                methodCoverageDataExecutor.put(advice.attachment());
+                coverageDataProcessor.add(advice.attachment());
             }
 
 
         };
         // 激活executor
-        methodCoverageDataExecutor.active();
+        coverageDataProcessor.active();
 
         // 开启监听
         new EventWatchBuilder(moduleEventWatcher, EventWatchBuilder.PatternType.REGEX)//一定要选择这种表达式模式
@@ -90,9 +88,7 @@ public class CodeCoverageModule implements Module, LoadCompleted {
     private void initModule(){
         log.info("覆盖率模块加载开始");
         // 创建数据消费者
-        this.coverageDataConsumerBuilder = new CoverageDataConsumerBuilder(configInfo);
-        // 初始化dataExecutor
-        this.methodCoverageDataExecutor = new AsyncDataExecutor<>(10240,2, coverageDataConsumerBuilder);
+        this.coverageDataProcessor = new CoverageDataProcessor(configInfo,2,10240);
     }
 
 }

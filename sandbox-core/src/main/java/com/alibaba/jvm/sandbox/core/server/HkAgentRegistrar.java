@@ -7,41 +7,45 @@ import cn.newgrand.ck.entity.request.AgentStatusRequest;
 import cn.newgrand.ck.entity.request.DeregisterRequest;
 import cn.newgrand.ck.entity.request.JVMInfoRequest;
 import cn.newgrand.ck.entity.request.RegisterRequest;
-import cn.newgrand.ck.entity.vo.RegisterResponseVO;
-import co.elastic.clients.elasticsearch.watcher.ResponseContentType;
+import com.alibaba.jvm.sandbox.api.resource.HKServerObserver;
 import com.alibaba.jvm.sandbox.api.tools.HkUtils;
 import com.alibaba.jvm.sandbox.api.tools.HttpClientUtil;
 import com.alibaba.jvm.sandbox.core.CoreConfigure;
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 鹰眼的agent注册器
  */
 public class HkAgentRegistrar {
-
+    private final List<HKServerObserver> HKServerObservers = new LinkedList<>();
     Logger logger = LoggerFactory.getLogger(getClass());
     private final CoreConfigure configure;
 
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
+    private final AtomicBoolean HKServerIsAvailable = new AtomicBoolean(false);
 
     public HkAgentRegistrar(CoreConfigure cfg) {
         this.configure = cfg;
+    }
+
+    /**
+     * 添加服务器观察者
+     * @param hkServerObserver
+     */
+    synchronized public void addHKServerObserver(HKServerObserver hkServerObserver){
+        HKServerObservers.add(hkServerObserver);
     }
 
     /**
@@ -50,8 +54,28 @@ public class HkAgentRegistrar {
      *
      */
     public void register() throws Exception {
-        checkConfig();
-        // 构建请求
+//        checkConfig();
+//        // 构建请求
+//        RegisterRequest registerRequest = getRegisterRequest();
+//
+//
+//        String url = HkUtils.getUrl(configure.getHkServerIp(), configure.getHkServerPort(), ApiPathConstant.REGISTER_URL);
+//        RegisterResponseVO registerResponseVO = HttpClientUtil.postByJson(url, registerRequest, RegisterResponseVO.class);
+//        if (Objects.isNull(registerResponseVO) || !Boolean.TRUE.equals(registerResponseVO.getSuccess())){
+//            logger.error("注册失败:{}",registerResponseVO);
+//            online.getAndSet(false);
+//            throw new RuntimeException("注册失败");
+//        }
+//        logger.info("agent注册成功:{}", registerResponseVO.getSuccess());
+//        online.getAndSet(true);
+        // 开启健康检查
+        healthStatusCheck();
+        // 注册关闭钩子
+        Runtime.getRuntime().addShutdownHook(new Thread(this::deregister));
+
+    }
+
+    private RegisterRequest getRegisterRequest() {
         RegisterRequest registerRequest = new RegisterRequest();
         registerRequest.setInstanceId(configure.getInstanceId());
         registerRequest.setAgentName(configure.getAgentName());
@@ -66,23 +90,7 @@ public class HkAgentRegistrar {
         registerRequest.setHealthCheckCycle(configure.getHkHealthCheckCycle());
         registerRequest.setHostName(configure.getHostName());
         registerRequest.setJvmInfo(getJVMInfo());
-
-
-
-        String url = HkUtils.getUrl(configure.getHkServerIp(), configure.getHkServerPort(), ApiPathConstant.REGISTER_URL);
-        RegisterResponseVO registerResponseVO = HttpClientUtil.postByJson(url, registerRequest, RegisterResponseVO.class);
-        if (Objects.isNull(registerResponseVO) || !Boolean.TRUE.equals(registerResponseVO.getSuccess())){
-            logger.error("注册失败:{}",registerResponseVO);
-            throw new RuntimeException("注册失败");
-        }
-        logger.info("agent注册成功:{}", registerResponseVO.getSuccess());
-        // 开启健康检查
-        healthStatusPush();
-        // 注册关闭钩子
-//        logger.info("注册时的类加载器:{}",this.getClass().getClassLoader().getClass().getName());
-//        logger.info("注册时的线程上下文加载器:{}",Thread.currentThread().getContextClassLoader().getClass().getName());
-        Runtime.getRuntime().addShutdownHook(new Thread(this::deregister));
-
+        return registerRequest;
     }
 
     /**
@@ -102,23 +110,33 @@ public class HkAgentRegistrar {
     /**
      * 健康状态推送
      */
-    private void healthStatusPush(){
+    private void healthStatusCheck(){
 
         Integer healthCheckCycle = configure.getHkHealthCheckCycle();
         if (0 == healthCheckCycle){
             return ;
         }
-
-        String url = HkUtils.getUrl(configure.getHkServerIp(), configure.getHkServerPort(), ApiPathConstant.HEALTH_CHECK_URL);
+        String healthCheckUrl = HkUtils.getUrl(configure.getHkServerIp(), configure.getHkServerPort(), ApiPathConstant.HEALTH_CHECK_URL);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             AgentStatusRequest agentStatusRequest = new AgentStatusRequest();
             agentStatusRequest.setTimeStamp(System.currentTimeMillis());
             agentStatusRequest.setInstanceId(configure.getInstanceId());
+            Exception healthCheckException = null;
+            Boolean healthCheckResult = null;
             try {
-                Boolean success = HttpClientUtil.postByJson(url, agentStatusRequest, Boolean.class);
-            } catch (IOException e) {
-                logger.error("心跳无响应",e);
+                healthCheckResult = HttpClientUtil.postByJson(healthCheckUrl, agentStatusRequest, Boolean.class);
+                logger.info("健康检查结果:{}",healthCheckResult);
+            } catch (Exception e) {
+                healthCheckException = e;
             }
+            if(healthCheckException == null || Boolean.TRUE.equals(healthCheckResult)){
+                // 心跳返回false，或者出现任何异常均视作鹰眼服务器不可用
+                HKServerIsAvailable.getAndSet(false);
+                // 不可用时返回false
+            }else {
+                HKServerIsAvailable.getAndSet(true);
+            }
+
         }, healthCheckCycle, healthCheckCycle, TimeUnit.SECONDS);
 
     }

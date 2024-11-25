@@ -1,6 +1,6 @@
 package cn.newgrand.ck.module;
 
-import cn.newgrand.ck.executor.ConsumerBuilder;
+import cn.newgrand.ck.executor.AbstractAsyncBufferDataProcessor;
 import cn.newgrand.ck.executor.DataConsumer;
 import cn.newgrand.ck.pojo.ClassCoverage;
 import cn.newgrand.ck.reporter.DataReporter;
@@ -8,7 +8,6 @@ import cn.newgrand.ck.reporter.LogDataReporter;
 import cn.newgrand.ck.pojo.MethodCoverage;
 import com.alibaba.jvm.sandbox.api.tools.ConcurrentHashSet;
 import com.alibaba.jvm.sandbox.api.resource.ConfigInfo;
-import com.alibaba.jvm.sandbox.api.tools.JSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
-public class CoverageDataConsumerBuilder implements ConsumerBuilder<MethodCoverage> {
+public class CoverageDataProcessor extends AbstractAsyncBufferDataProcessor<MethodCoverage> {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -39,7 +38,8 @@ public class CoverageDataConsumerBuilder implements ConsumerBuilder<MethodCovera
      */
     private final ConcurrentHashSet<ClassCoverage> sendClassCoverage = new ConcurrentHashSet<>();
 
-    public CoverageDataConsumerBuilder(ConfigInfo configInfo) {
+    public CoverageDataProcessor(ConfigInfo configInfo, int consumerCount, int dataQueueSize) {
+        super(consumerCount, dataQueueSize);
         this.configInfo = configInfo;
 //            this.dataReporter = new HttpDataReporter(configInfo);
         this.dataReporter = new LogDataReporter(configInfo);
@@ -53,10 +53,12 @@ public class CoverageDataConsumerBuilder implements ConsumerBuilder<MethodCovera
         return new CoverageDataConsumer();
     }
 
-    class CoverageDataConsumer implements DataConsumer<MethodCoverage> {
+
+    class CoverageDataConsumer extends DataConsumer<MethodCoverage> {
+
 
         @Override
-        public void comsumer(MethodCoverage data) {
+        public void consume(MethodCoverage data) {
             // 获取类覆盖率
             String className = data.getClassName();
             ClassCoverage classCoverage = appCoverage.computeIfAbsent(className, ClassCoverage::new);
@@ -70,6 +72,11 @@ public class CoverageDataConsumerBuilder implements ConsumerBuilder<MethodCovera
 
             // 尝试发送数据
             tryReport();
+        }
+
+        @Override
+        public boolean isAvailable() {
+            return false;
         }
 
         /**
