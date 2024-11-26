@@ -7,6 +7,7 @@ import cn.newgrand.ck.entity.request.AgentStatusRequest;
 import cn.newgrand.ck.entity.request.DeregisterRequest;
 import cn.newgrand.ck.entity.request.JVMInfoRequest;
 import cn.newgrand.ck.entity.request.RegisterRequest;
+import cn.newgrand.ck.entity.vo.RegisterResponseVO;
 import com.alibaba.jvm.sandbox.api.resource.HKServerObserver;
 import com.alibaba.jvm.sandbox.api.tools.HkUtils;
 import com.alibaba.jvm.sandbox.api.tools.HttpClientUtil;
@@ -49,30 +50,32 @@ public class HkAgentRegistrar {
     }
 
     /**
-     * 注册agent到鹰眼
-     * @return
-     *
+     * 激活Register自律行为
+     * 注册失败会排除异常
      */
-    public void register() throws Exception {
-//        checkConfig();
-//        // 构建请求
-//        RegisterRequest registerRequest = getRegisterRequest();
-//
-//
-//        String url = HkUtils.getUrl(configure.getHkServerIp(), configure.getHkServerPort(), ApiPathConstant.REGISTER_URL);
-//        RegisterResponseVO registerResponseVO = HttpClientUtil.postByJson(url, registerRequest, RegisterResponseVO.class);
-//        if (Objects.isNull(registerResponseVO) || !Boolean.TRUE.equals(registerResponseVO.getSuccess())){
-//            logger.error("注册失败:{}",registerResponseVO);
-//            online.getAndSet(false);
-//            throw new RuntimeException("注册失败");
-//        }
-//        logger.info("agent注册成功:{}", registerResponseVO.getSuccess());
-//        online.getAndSet(true);
+    public void active() throws Exception {
+        checkConfig();
+        RegisterResponseVO registerVO = register();
+        if (Objects.isNull(registerVO) || !Boolean.TRUE.equals(registerVO.getSuccess())){
+            logger.error("注册失败:{}",registerVO);
+            throw new RuntimeException("注册失败");
+        }
+        logger.info("agent注册成功:{}", registerVO.getSuccess());
         // 开启健康检查
         healthStatusCheck();
         // 注册关闭钩子
         Runtime.getRuntime().addShutdownHook(new Thread(this::deregister));
 
+    }
+
+    /**
+     * 注册接口
+     */
+    public RegisterResponseVO register() throws IOException {
+        // 构建请求
+        RegisterRequest registerRequest = getRegisterRequest();
+        String url = HkUtils.getUrl(configure.getHkServerIp(), configure.getHkServerPort(), ApiPathConstant.REGISTER_URL);
+        return HttpClientUtil.postByJson(url, registerRequest, RegisterResponseVO.class);
     }
 
     private RegisterRequest getRegisterRequest() {
@@ -118,23 +121,30 @@ public class HkAgentRegistrar {
         }
         String healthCheckUrl = HkUtils.getUrl(configure.getHkServerIp(), configure.getHkServerPort(), ApiPathConstant.HEALTH_CHECK_URL);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
-            AgentStatusRequest agentStatusRequest = new AgentStatusRequest();
-            agentStatusRequest.setTimeStamp(System.currentTimeMillis());
-            agentStatusRequest.setInstanceId(configure.getInstanceId());
             Exception healthCheckException = null;
             Boolean healthCheckResult = null;
             try {
+                AgentStatusRequest agentStatusRequest = new AgentStatusRequest();
+                agentStatusRequest.setTimeStamp(System.currentTimeMillis());
+                agentStatusRequest.setInstanceId(configure.getInstanceId());
                 healthCheckResult = HttpClientUtil.postByJson(healthCheckUrl, agentStatusRequest, Boolean.class);
                 logger.info("健康检查结果:{}",healthCheckResult);
             } catch (Exception e) {
                 healthCheckException = e;
             }
-            if(healthCheckException == null || Boolean.TRUE.equals(healthCheckResult)){
-                // 心跳返回false，或者出现任何异常均视作鹰眼服务器不可用
+            if( null !=  healthCheckException || null == healthCheckResult ){
+                // 出现任何异常则视作鹰眼服务器不可用
                 HKServerIsAvailable.getAndSet(false);
-                // 不可用时返回false
             }else {
+                // 否则视作正常响应, 根据返回值判断是否重新注册
                 HKServerIsAvailable.getAndSet(true);
+                if(Boolean.FALSE.equals(healthCheckResult)){
+                    try {
+                        register();
+                    } catch (Exception e) {
+                        logger.warn("自动注册失败",e);
+                    }
+                }
             }
 
         }, healthCheckCycle, healthCheckCycle, TimeUnit.SECONDS);

@@ -2,6 +2,7 @@ package com.alibaba.jvm.sandbox.core;
 
 import com.alibaba.jvm.sandbox.api.Information;
 import com.alibaba.jvm.sandbox.core.util.FeatureCodec;
+import lombok.Getter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -94,6 +95,7 @@ public class CoreConfigure {
 
     private final Map<String, String> featureMap = new LinkedHashMap<>();
 
+    @Getter
     private String instanceId;
     
 
@@ -494,9 +496,6 @@ public class CoreConfigure {
         return featureMap.get(KEY_GIT_ID);
     }
 
-    public String getInstanceId() {
-        return instanceId;
-    }
     public String getHostName(){
         return featureMap.get(KEY_HOST_NAME);
     }

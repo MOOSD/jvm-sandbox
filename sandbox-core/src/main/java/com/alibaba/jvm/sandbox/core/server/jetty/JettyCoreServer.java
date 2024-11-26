@@ -186,7 +186,7 @@ public class JettyCoreServer implements CoreServer {
             // 如果启用了注册，则进行服务注册
             if (cfg.hkServerRegistryEnable()){
                 hkAgentRegistrar = new HkAgentRegistrar(cfg);
-                hkAgentRegistrar.register();
+                hkAgentRegistrar.active();
             }
             // 初始化加载所有的模块,包括系统模块和管理模块
             try {
