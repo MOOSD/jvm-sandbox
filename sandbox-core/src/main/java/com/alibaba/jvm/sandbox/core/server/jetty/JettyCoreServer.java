@@ -186,6 +186,9 @@ public class JettyCoreServer implements CoreServer {
             // 如果启用了注册，则进行服务注册
             if (cfg.hkServerRegistryEnable()){
                 hkAgentRegistrar = new HkAgentRegistrar(cfg);
+                // 给注册器添加观察者 todo 注意这里的引用是否会导致内存泄漏
+                hkAgentRegistrar.addHKServerObserver(jvmSandbox.getCoreModuleManager());
+                // 激活服务注册
                 hkAgentRegistrar.active();
             }
             // 初始化加载所有的模块,包括系统模块和管理模块
@@ -206,6 +209,7 @@ public class JettyCoreServer implements CoreServer {
             logger.error("server bind failed.", cause);
             // 对外抛出到目标应用中
 //            throw new IOException("server bind failed.", cause);
+            return;
         }
         logger.info("{} bind success.", this);
     }

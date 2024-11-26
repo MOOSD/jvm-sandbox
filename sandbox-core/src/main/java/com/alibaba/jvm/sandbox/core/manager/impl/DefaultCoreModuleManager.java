@@ -510,6 +510,24 @@ public class DefaultCoreModuleManager implements CoreModuleManager {
         return isOptimisticDirectoryContainsFile(new File(cfg.getSystemModuleLibPath()), child);
     }
 
+    @Override
+    public void HKServerStateNotify(boolean available) {
+        // 通知每个模块，鹰眼服务器状态发生了变化
+        for (CoreModule coreModule : loadedModuleBOMap.values()) {
+            if (!(coreModule.isLoaded() && coreModule.isActivated())){
+                continue;
+            }
+            try{
+                Module module = coreModule.getModule();
+                module.HKServerStateChange(available);
+                logger.info("鹰眼服务器状态修改,通知模块: {}",coreModule.getJarFile().getName());
+            }catch (Exception e){
+                logger.error("通知模块时出现异常, 模块所在jar:{} ",coreModule.getJarFile().getName());
+                logger.error("异常堆栈：",e);
+            }
+        }
+    }
+
     /**
      * 用户模块文件加载回调
      */

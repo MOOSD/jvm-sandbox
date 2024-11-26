@@ -16,6 +16,6 @@ package com.alibaba.jvm.sandbox.api;
  *
  * @author luanjia@taobao.com
  */
-public interface Module {
+public interface Module extends ModuleNotifier{
 
 }

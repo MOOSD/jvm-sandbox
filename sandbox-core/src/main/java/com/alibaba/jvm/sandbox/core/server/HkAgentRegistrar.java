@@ -35,7 +35,7 @@ public class HkAgentRegistrar {
 
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
-    private final AtomicBoolean HKServerIsAvailable = new AtomicBoolean(false);
+    private boolean HKServerIsAvailable = false;
 
     public HkAgentRegistrar(CoreConfigure cfg) {
         this.configure = cfg;
@@ -48,6 +48,22 @@ public class HkAgentRegistrar {
     synchronized public void addHKServerObserver(HKServerObserver hkServerObserver){
         HKServerObservers.add(hkServerObserver);
     }
+
+    /**
+     * todo 线程安全问题
+     */
+    synchronized public void serviceIsAvailable(boolean available){
+        if (HKServerIsAvailable == available){
+            return;
+        }
+        HKServerIsAvailable = available;
+        logger.info("服务器状态发生变化:{}, 通知所有观察者",available);
+        // 通知所有观察者
+        for (HKServerObserver hkServerObserver : HKServerObservers) {
+            hkServerObserver.HKServerStateNotify(available);
+        }
+    }
+
 
     /**
      * 激活Register自律行为
@@ -131,20 +147,22 @@ public class HkAgentRegistrar {
                 logger.info("健康检查结果:{}",healthCheckResult);
             } catch (Exception e) {
                 healthCheckException = e;
+                logger.error("心跳状态推送异常:{}", e.getMessage());
             }
-            if( null !=  healthCheckException || null == healthCheckResult ){
+            if( null == healthCheckResult || null !=  healthCheckException ){
                 // 出现任何异常则视作鹰眼服务器不可用
-                HKServerIsAvailable.getAndSet(false);
-            }else {
-                // 否则视作正常响应, 根据返回值判断是否重新注册
-                HKServerIsAvailable.getAndSet(true);
-                if(Boolean.FALSE.equals(healthCheckResult)){
-                    try {
-                        register();
-                    } catch (Exception e) {
-                        logger.warn("自动注册失败",e);
-                    }
+                serviceIsAvailable(false);
+            }else if(Boolean.FALSE.equals(healthCheckResult)){
+                try {
+                    register();
+                    // 否则视作正常响应, 根据返回值判断是否重新注册
+                    serviceIsAvailable(true);
+                } catch (Exception e) {
+                    logger.warn("自动注册失败",e);
                 }
+            }else if(Boolean.TRUE.equals(healthCheckResult)){
+                // 心跳正常，服务器状态视为正常
+                serviceIsAvailable(true);
             }
 
         }, healthCheckCycle, healthCheckCycle, TimeUnit.SECONDS);
