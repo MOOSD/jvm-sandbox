@@ -6,6 +6,16 @@ import java.util.List;
 public class MethodTreeDTO {
 
     private MethodInfo methodInfo;
+
+    public Integer getDepth() {
+        return depth;
+    }
+
+    public void setDepth(Integer depth) {
+        this.depth = depth;
+    }
+
+    private Integer depth;
     private long beginTimestamp;
     private long endTimestamp;
     private List<MethodTreeDTO> children = new ArrayList<>();

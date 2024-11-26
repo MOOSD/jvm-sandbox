@@ -61,19 +61,17 @@ public class TraceIdModule implements Module, LoadCompleted {
 
 
                         // 通过反射获取请求头中的traceId属性
-                        System.out.println("serverHttpRequest = " + serverHttpRequest);
+
                         Method getHeaders = getMethod(serverHttpRequest, "getHeaders");
                         Object headers = getHeaders.invoke(serverHttpRequest);
-                        System.out.println("headers = " + headers);
+
                         Method get = headers.getClass().getMethod("get", Object.class);
-                        System.out.println("headers type : " + headers.getClass().getName());
-                        System.out.println("get = " + get);
+
                         get.setAccessible(true);
                         Object headerList = get.invoke(headers, LinkConstant.TRACE_ID);
-                        System.out.println("headerList = " + headerList);
+
 
                         Object userAgent = get.invoke(headers, "User-Agent");
-                        System.out.println("userAgent = " + userAgent);
 
                         // 如果 taceId 不存在则生成唯一 traceId 并且将其放入到请求头中
                         if(Objects.isNull(headerList)){
@@ -90,33 +88,26 @@ public class TraceIdModule implements Module, LoadCompleted {
 
                             header.invoke(builder, LinkConstant.TRACE_ID, new String[]{uuid});
 
-                            System.out.println("add traceId-----------------");
-                            //System.out.println(agent);
-                            System.out.println(header);
+
                         }
-                        System.out.println("-----------------------");
-                        System.out.println(traceIdThreadLocal.get());
-                        System.out.println(requestTtl.get());
-                        System.out.println("-----------------------");
+
                     }
 
                     @Override
                     protected void afterReturning(Advice advice) {
-                        System.out.println("afterReturning---------------");
+
                         if (!advice.isProcessTop()) {
                             return;
                         }
-                        System.out.println("before remove traceIdThreadLocal: " + traceIdThreadLocal.get());
-                        System.out.println("before remove requestTtl: " + requestTtl.get());
+
                         traceIdThreadLocal.remove();
                         requestTtl.remove();
-                        System.out.println("after remove traceIdThreadLocal: " + traceIdThreadLocal.get());
-                        System.out.println("after remove requestTtl: " + requestTtl.get());
+
                     }
 
                     @Override
                     protected void afterThrowing(Advice advice) {
-                        System.out.println("afterThrowing---------------");
+
                         if (!advice.isProcessTop()) {
                             return;
                         }
@@ -142,9 +133,6 @@ public class TraceIdModule implements Module, LoadCompleted {
                         Object headerTraceId = getHeader(requestObj, LinkConstant.TRACE_ID);
                         Object headerTraceIdByStr = getHeader(requestObj, "traceId");
                         Object headerSpanId = getHeader(requestObj, LinkConstant.SPAN_ID);
-                        System.out.println("headerTraceId: " + headerTraceId);
-                        System.out.println("headerTraceIdByStr = " + headerTraceIdByStr);
-                        System.out.println("headerTraceId is NULL: " + (headerTraceId == null));
 
 
                         if(headerTraceId != null){
@@ -152,7 +140,6 @@ public class TraceIdModule implements Module, LoadCompleted {
                             RequestContext requestContext = new RequestContext((String) headerTraceId, (String) headerSpanId, (String) getHeader(requestObj, "User-Agent"));
                             requestTtl.set(requestContext);
                             setAttribute(requestObj, LinkConstant.TRACE_ID, getThreadLocalValue());
-                            System.out.println("11111");
                         }
 
                         if(traceIdThreadLocal.get() == null){
@@ -162,34 +149,21 @@ public class TraceIdModule implements Module, LoadCompleted {
                             requestTtl.set(requestContext);
                             String requestURI = (String) getMethod(requestObj, "getRequestURI").invoke(requestObj);
                             logger.info("Injected traceId: {} into request: {}", uuid, requestURI);
-                            System.out.println("Injected traceId:" + uuid);
-                            System.out.println("request:" + requestURI);
-                            System.out.println("00000");
                         }
 
-                        System.out.println("-----------------------");
-                        System.out.println(traceIdThreadLocal.get());
-                        System.out.println(requestTtl.get());
-                        System.out.println("-----------------------");
                     }
 
                     @Override
                     protected void afterReturning(Advice advice) {
-                        System.out.println("afterReturning---------------");
                         if (!advice.isProcessTop()) {
                             return;
                         }
-                        System.out.println("before remove traceIdThreadLocal: " + traceIdThreadLocal.get());
-                        System.out.println("before remove requestTtl: " + requestTtl.get());
                         traceIdThreadLocal.remove();
                         requestTtl.remove();
-                        System.out.println("after remove traceIdThreadLocal: " + traceIdThreadLocal.get());
-                        System.out.println("after remove requestTtl: " + requestTtl.get());
                     }
 
                     @Override
                     protected void afterThrowing(Advice advice) {
-                        System.out.println("afterThrowing---------------");
                         if (!advice.isProcessTop()) {
                             return;
                         }
@@ -209,15 +183,10 @@ public class TraceIdModule implements Module, LoadCompleted {
 
                     @Override
                     protected void before(Advice advice) throws Throwable {
-                        System.out.println("feign.SynchronousMethodHandler 的 executeAndDecode");
                         Object o = advice.getParameterArray()[0];
-                        System.out.println("参数: " + o);
 
-                        System.out.println("traceIdThreadLocal: " + traceIdThreadLocal.get());
                         header(o, LinkConstant.TRACE_ID, traceIdThreadLocal.get());
                         header(o, LinkConstant.SPAN_ID, requestTtl.get().getSpanId());
-                        System.out.println("headers(o) = " + headers(o));
-                        System.out.println("+++++++++++++++++++++++++++++++++++++++=");
                     }
                 });
 
