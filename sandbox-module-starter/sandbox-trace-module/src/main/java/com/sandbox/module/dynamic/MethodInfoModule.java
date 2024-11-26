@@ -7,6 +7,7 @@ import com.alibaba.jvm.sandbox.api.listener.ext.Advice;
 import com.alibaba.jvm.sandbox.api.listener.ext.AdviceListener;
 import com.alibaba.jvm.sandbox.api.listener.ext.EventWatchBuilder;
 import com.alibaba.jvm.sandbox.api.resource.ModuleEventWatcher;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sandbox.module.Context.RequestContext;
@@ -28,10 +29,6 @@ public class MethodInfoModule implements Module, LoadCompleted {
 
     @Resource
     private ModuleEventWatcher moduleEventWatcher;
-
-    final Map<String, Set<String>> map = new HashMap<>();
-
-    final List<String> methods = new ArrayList<>();
 
     @Override
     public void loadCompleted() {
@@ -63,37 +60,45 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         MethodInfo methodInfo = new MethodInfo();
                         methodInfo.setClassName(advice.getBehavior().getDeclaringClass().getName());
                         methodInfo.setMethodName(advice.getBehavior().getName());
+                        if(Objects.nonNull(advice.getParameterArray())){
+                            Object[] objectArray = advice.getParameterArray();
+                            String[] classNames = new String[objectArray.length];
+                            for (int i = 0; i < objectArray.length; i++) {
+                                classNames[i] = objectArray[i].getClass().getName();  // 获取类的完全限定名
+                            }
+                            methodInfo.setParams(classNames);
+                        }
                         RequestContext requestTtl = TraceIdModule.getRequestTtl();
                         if(Objects.nonNull(requestTtl)){
                             methodInfo.setTraceId(requestTtl.getTraceId());
                             methodInfo.setSpanId(requestTtl.getSpanId());
                         }
-
                         return methodInfo;
                     }
                     @Override
                     protected void afterReturning(Advice advice) throws Throwable {
-
                         final MethodTree methodTree = advice.getProcessTop().attachment();
+                        MethodInfo methodInfo = methodTree.getCurrentData();
+                        if(advice.getReturnObj() != null){
+                            methodInfo.setData(advice.getReturnObj().toString());
+                        }
+                        methodTree.setCurrentData(methodInfo);
                         methodTree.end();
-                        sendMessage(advice);
+                        if(advice.isProcessTop()){
+                            sendMessage(advice);
+                        }
                     }
 
                     @Override
                     protected void afterThrowing(Advice advice) throws Throwable {
                         final MethodTree methodTree = advice.getProcessTop().attachment();
-
-
-                        MethodInfo methodInfo = new MethodInfo();
-                        methodInfo.setClassName(advice.getThrowable().getClass().getName());
-                        RequestContext requestTtl = TraceIdModule.getRequestTtl();
-                        if(Objects.nonNull(requestTtl)){
-                            methodInfo.setTraceId(requestTtl.getTraceId());
-                            methodInfo.setSpanId(requestTtl.getSpanId());
-                        }
+                        MethodInfo methodInfo = methodTree.getCurrentData();
+                        methodInfo.setLog(advice.getThrowable().toString());
                         methodTree.begin(methodInfo).end();
                         methodTree.end();
-                        sendMessage(advice);
+                        if(advice.isProcessTop()){
+                            sendMessage(advice);
+                        }
                     }
 
                     @Override
@@ -102,17 +107,16 @@ public class MethodInfoModule implements Module, LoadCompleted {
                                               final String callJavaClassName,
                                               final String callJavaMethodName,
                                               final String callJavaMethodDesc) {
-                        final MethodTree methodTree = advice.getProcessTop().attachment();
-                        MethodInfo methodInfo = new MethodInfo();
-                        methodInfo.setClassName(callJavaClassName);
-                        methodInfo.setMethodName(callJavaMethodName);
-                        RequestContext requestTtl = TraceIdModule.getRequestTtl();
-                        if(Objects.nonNull(requestTtl)){
-                            methodInfo.setTraceId(requestTtl.getTraceId());
-                            methodInfo.setSpanId(requestTtl.getSpanId());
-                        }
-
-                        methodTree.begin(methodInfo);
+//                        final MethodTree methodTree = advice.getProcessTop().attachment();
+//                        MethodInfo methodInfo = new MethodInfo();
+//                        methodInfo.setClassName(callJavaClassName+"-"+callLineNum);
+//                        methodInfo.setMethodName(callJavaMethodName);
+//                        RequestContext requestTtl = TraceIdModule.getRequestTtl();
+//                        if(Objects.nonNull(requestTtl)){
+//                            methodInfo.setTraceId(requestTtl.getTraceId());
+//                            methodInfo.setSpanId(requestTtl.getSpanId());
+//                        }
+//                        methodTree.begin(methodInfo);
                     }
 
                     @Override
@@ -121,8 +125,8 @@ public class MethodInfoModule implements Module, LoadCompleted {
                                                       final String callJavaClassName,
                                                       final String callJavaMethodName,
                                                       final String callJavaMethodDesc) {
-                        final MethodTree methodTree = advice.getProcessTop().attachment();
-                        methodTree.end();
+//                        final MethodTree methodTree = advice.getProcessTop().attachment();
+//                        methodTree.end();
                     }
 
                     @Override
@@ -132,16 +136,16 @@ public class MethodInfoModule implements Module, LoadCompleted {
                                                      final String callJavaMethodName,
                                                      final String callJavaMethodDesc,
                                                      final String callThrowJavaClassName) {
-                        final MethodTree methodTree = advice.getProcessTop().attachment();
-
-                        MethodInfo methodInfo = new MethodInfo();
-                        methodInfo.setClassName(advice.getThrowable().getClass().getName());
-                        RequestContext requestTtl = TraceIdModule.getRequestTtl();
-                        if(Objects.nonNull(requestTtl)){
-                            methodInfo.setTraceId(requestTtl.getTraceId());
-                            methodInfo.setSpanId(requestTtl.getSpanId());
-                        }
-                        methodTree.set(methodInfo).end();
+//                        final MethodTree methodTree = advice.getProcessTop().attachment();
+//
+//                        MethodInfo methodInfo = new MethodInfo();
+//                        methodInfo.setClassName(advice.getThrowable().getClass().getName());
+//                        RequestContext requestTtl = TraceIdModule.getRequestTtl();
+//                        if(Objects.nonNull(requestTtl)){
+//                            methodInfo.setTraceId(requestTtl.getTraceId());
+//                            methodInfo.setSpanId(requestTtl.getSpanId());
+//                        }
+//                        methodTree.set(methodInfo).end();
                     }
 
                 });
@@ -151,22 +155,23 @@ public class MethodInfoModule implements Module, LoadCompleted {
 
     //根据实际情况 构建匹配类的正则表达式
     private String buildClassPattern() {
-        return "^cn\\.newgrand\\.ck.*";
+        return "^cn\\.newgrand.*";
 //        return "^cn\\.newgrand\\.ck\\.(controller|service|util|mapper).*";
     }
 
 
     private void sendMessage(Advice advice){
-        if(advice.isProcessTop() && Objects.nonNull(TraceIdModule.getRequestTtl())){
+        if(advice.isProcessTop()){
             if(advice.getTarget().getClass().getName().contains("Controller")){
                 final MethodTree methodTree = advice.getProcessTop().attachment();
-
                 String json = null;
                 try {
                     ObjectMapper objectMapper = new ObjectMapper();
+                    objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
                     json = objectMapper.writeValueAsString(methodTree.convertToDTO(methodTree.getCurrent()));
                     logger.info("方法[{}]调用链路:{} ", advice.getBehavior().getName(), json);
                 } catch (JsonProcessingException e) {
+                    logger.error("序列化方法调用链时发生异常: ", e);
                     throw new RuntimeException(e);
                 }
             }

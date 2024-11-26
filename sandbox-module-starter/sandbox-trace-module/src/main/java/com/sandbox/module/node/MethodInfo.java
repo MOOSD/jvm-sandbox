@@ -1,9 +1,18 @@
 package com.sandbox.module.node;
 
+import java.util.Arrays;
+
 public class MethodInfo {
 
     private String className;
     private String methodName;
+
+    private String log;
+
+    private String data;
+
+    private String[] params;
+
 
     private String traceId;
 
@@ -23,6 +32,21 @@ public class MethodInfo {
 
     public void setMethodName(String methodName) {
         this.methodName = methodName;
+    }
+
+    public String getLog(){
+        return log;
+    }
+
+    public void setLog(String log){
+        this.log = log;
+    }
+    public String getData(){
+        return data;
+    }
+
+    public void setData(String data){
+        this.data = data;
     }
 
     public String getTraceId() {
@@ -46,8 +70,19 @@ public class MethodInfo {
         return "MethodInfo{" +
                 "className='" + className + '\'' +
                 ", methodName='" + methodName + '\'' +
+                ", log='" + log + '\'' +
+                ", data='" + data + '\'' +
                 ", traceId='" + traceId + '\'' +
                 ", spanId='" + spanId + '\'' +
+                ", params=" + Arrays.toString(params) +
                 '}';
+    }
+
+    public String[] getParams() {
+        return params;
+    }
+
+    public void setParams(String[] params) {
+        this.params = params;
     }
 }
