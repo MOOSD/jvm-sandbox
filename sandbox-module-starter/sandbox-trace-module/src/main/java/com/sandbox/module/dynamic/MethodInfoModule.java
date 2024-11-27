@@ -46,8 +46,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
 
     @Override
     public void loadCompleted() {
-
-        logger.info("动态调用链路模块加载完成！");
+        initModule();
 
         new EventWatchBuilder(moduleEventWatcher, EventWatchBuilder.PatternType.REGEX)
                 .onClass(buildClassPattern())
@@ -120,7 +119,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
     }
 
     private void initModule() {
-        logger.info("覆盖率模块加载开始");
+        logger.info("动态调用链路模块加载完成！");
         // 创建数据发送器
         DataReporter dataReporter = new LogDataReporter(configInfo);
         // 创建消费者
