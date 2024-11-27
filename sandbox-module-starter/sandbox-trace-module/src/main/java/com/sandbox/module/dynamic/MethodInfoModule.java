@@ -113,7 +113,8 @@ public class MethodInfoModule implements Module, LoadCompleted {
 
     private void sendMessage(Advice advice){
         if(advice.isProcessTop()){
-            final MethodTree methodTree = advice.getProcessTop().attachment();
+            if(Objects.isNull(advice.getTarget()) || advice.getTarget().getClass().getName().contains("Controller")){
+                final MethodTree methodTree = advice.getProcessTop().attachment();
                 String json = null;
                 try {
                     ObjectMapper objectMapper = new ObjectMapper();
@@ -124,6 +125,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
                     logger.error("序列化方法调用链时发生异常: ", e);
                     throw new RuntimeException(e);
                 }
+            }
         }
     }
 }
