@@ -88,7 +88,7 @@ public class CoreConfigure {
      * 模块相关的配置
      */
     private static final String KEY_MODULE_COVERAGE_PATTERN = "module.coverage.pattern";
-    private static final String KEY_MODULE_TRACE_PATTERN = "module.coverage.pattern";
+    private static final String KEY_MODULE_TRACE_PATTERN = "module.trace.pattern";
 
 
     // 受保护key数组，在保护key范围之内，以用户传递的配置为准，系统配置不允许覆盖
