@@ -124,24 +124,6 @@ public class MethodInfoModule implements Module, LoadCompleted {
         }
     }
 
-    private boolean isControllerMethod(Advice advice){
-        // 获取目标类的 Class 对象
-        Class<?> targetClass = advice.getTargetClass();
-
-        // 检查是否有特定注解
-        MyCustomAnnotation annotation = targetClass.getAnnotation(MyCustomAnnotation.class);
-        if (annotation != null) {
-            // 处理注解逻辑
-            System.out.println("Found annotation: " + annotation.value());
-        }
-
-        // 如果需要获取所有注解
-        Annotation[] annotations = targetClass.getAnnotations();
-        for (Annotation anno : annotations) {
-            System.out.println("Class Annotation: " + anno.annotationType().getName());
-        }
-    }
-
     private void initModule() {
         logger.info("动态调用链路模块加载完成！");
         // 创建数据发送器
