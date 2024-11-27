@@ -86,7 +86,6 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         }
                         methodTree.setCurrentData(methodInfo);
                         methodTree.end();
-
                         sendMessage(advice);
                     }
 
@@ -124,6 +123,17 @@ public class MethodInfoModule implements Module, LoadCompleted {
                 } catch (JsonProcessingException e) {
                     logger.error("序列化方法调用链时发生异常: ", e);
                     throw new RuntimeException(e);
+                }
+            }else{
+                try{
+                    final MethodTree methodTree = advice.getProcessTop().attachment();
+                    if(methodTree.isTop()){
+                        logger.info("方法为根方法");
+                    }else{
+                        logger.info("方法{}调用链路:{} ", advice.getBehavior().getName(), methodTree.convertToDTO(methodTree.getCurrent()));
+                    }
+                } catch (Exception e){
+                    logger.error("方法{}序列化报错{} ", advice.getBehavior().getName(), e.getMessage());
                 }
             }
         }
