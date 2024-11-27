@@ -51,21 +51,34 @@ public class DefaultCoreModuleManager implements CoreModuleManager {
     private final Map<String, CoreModule> loadedModuleBOMap = new ConcurrentHashMap<>();
 
     /**
+     * 新增两个实例字段
+     */
+    private final String instanceId;
+
+    private final CoreAgentInfo coreAgentInfo;
+
+
+    /**
      * 模块模块管理
      *
      * @param cfg             模块核心配置
      * @param inst            inst
+     * @param coreAgentInfo
      * @param classDataSource 已加载类数据源
      * @param providerManager 服务提供者管理器
      */
     public DefaultCoreModuleManager(final CoreConfigure cfg,
                                     final Instrumentation inst,
+                                    final String sandBoxInstanceId,
+                                    final CoreAgentInfo coreAgentInfo,
                                     final CoreLoadedClassDataSource classDataSource,
                                     final ProviderManager providerManager) {
+        this.instanceId = sandBoxInstanceId;
         this.cfg = cfg;
         this.inst = inst;
         this.classDataSource = classDataSource;
         this.providerManager = providerManager;
+        this.coreAgentInfo = coreAgentInfo;
 
         // 初始化模块目录
         this.moduleLibDirArray = mergeFileArray(
@@ -74,6 +87,7 @@ public class DefaultCoreModuleManager implements CoreModuleManager {
                         : new File[]{new File(cfg.getSystemModuleLibPath())},
                 cfg.getUserModuleLibFilesWithCache()
         );
+
     }
 
     private File[] mergeFileArray(File[] aFileArray, File[] bFileArray) {
@@ -267,6 +281,25 @@ public class DefaultCoreModuleManager implements CoreModuleManager {
                             resourceField,
                             module,
                             new DefaultConfigInfo(cfg),
+                            true
+                    );
+                }
+
+                else if (AgentInfo.class.isAssignableFrom(fieldType)) {
+                    writeField(
+                            resourceField,
+                            module,
+                            new AgentInfo() {
+                                @Override
+                                public Boolean hKServiceIsAvailable() {
+                                    return coreAgentInfo.getHkServiceIsAvailable();
+                                }
+
+                                @Override
+                                public String getInstanceId() {
+                                    return instanceId;
+                                }
+                            },
                             true
                     );
                 }
@@ -511,18 +544,20 @@ public class DefaultCoreModuleManager implements CoreModuleManager {
     }
 
     @Override
-    public void HKServerStateNotify(boolean available) {
+    public void hkServerStatePushAllModule(boolean available){
         // 通知每个模块，鹰眼服务器状态发生了变化
         for (CoreModule coreModule : loadedModuleBOMap.values()) {
             if (!(coreModule.isLoaded() && coreModule.isActivated())){
                 continue;
             }
+            String jarName = coreModule.getJarFile().getName();
+            String moduleId = coreModule.getUniqueId();
             try{
                 Module module = coreModule.getModule();
-                module.HKServerStateChange(available);
-                logger.info("鹰眼服务器状态修改,通知模块: {}",coreModule.getJarFile().getName());
+                module.hkServerStateChange(available);
+                logger.info("鹰眼服务器状态修改,通知模块 jar:{} module:{} ", jarName, moduleId);
             }catch (Exception e){
-                logger.error("通知模块时出现异常, 模块所在jar:{} ",coreModule.getJarFile().getName());
+                logger.error("通知模块时出现异常, 模块 jar:{} module:{} ", jarName, moduleId);
                 logger.error("异常堆栈：",e);
             }
         }

@@ -1,7 +1,7 @@
 package com.alibaba.jvm.sandbox.core.manager;
 
 import com.alibaba.jvm.sandbox.api.ModuleException;
-import com.alibaba.jvm.sandbox.api.resource.HKServerObserver;
+import com.alibaba.jvm.sandbox.api.resource.ModuleObserver;
 import com.alibaba.jvm.sandbox.core.CoreModule;
 
 import java.util.Collection;
@@ -10,7 +10,7 @@ import java.util.Collection;
  * 模块管理
  * Created by luanjia on 16/10/4.
  */
-public interface CoreModuleManager extends HKServerObserver {
+public interface CoreModuleManager extends ModuleObserver {
 
     /**
      * 刷新沙箱模块

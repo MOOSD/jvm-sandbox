@@ -12,6 +12,7 @@ import com.alibaba.jvm.sandbox.api.resource.HKServerObserver;
 import com.alibaba.jvm.sandbox.api.tools.HkUtils;
 import com.alibaba.jvm.sandbox.api.tools.HttpClientUtil;
 import com.alibaba.jvm.sandbox.core.CoreConfigure;
+import com.alibaba.jvm.sandbox.core.JvmSandbox;
 import org.apache.commons.lang3.ObjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,49 +20,38 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
-import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 鹰眼的agent注册器
  */
 public class HkAgentRegistrar {
-    private final List<HKServerObserver> HKServerObservers = new LinkedList<>();
     Logger logger = LoggerFactory.getLogger(getClass());
+    private final HKServerObserver hkServerObserver;
     private final CoreConfigure configure;
+
+    private final String instanceId;
 
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
-    private boolean HKServerIsAvailable = false;
+    private boolean hkServerIsAvailable = false;
 
-    public HkAgentRegistrar(CoreConfigure cfg) {
+    public HkAgentRegistrar(CoreConfigure cfg, JvmSandbox jvmSandbox) {
         this.configure = cfg;
+        // 添加观察者
+        hkServerObserver = jvmSandbox;
+        // instanceId
+        instanceId = jvmSandbox.getInstanceId();
     }
 
-    /**
-     * 添加服务器观察者
-     * @param hkServerObserver
-     */
-    synchronized public void addHKServerObserver(HKServerObserver hkServerObserver){
-        HKServerObservers.add(hkServerObserver);
-    }
 
-    /**
-     * todo 线程安全问题
-     */
     synchronized public void serviceIsAvailable(boolean available){
-        if (HKServerIsAvailable == available){
-            return;
-        }
-        HKServerIsAvailable = available;
-        logger.info("服务器状态发生变化:{}, 通知所有观察者",available);
+        hkServerIsAvailable = available;
         // 通知所有观察者
-        for (HKServerObserver hkServerObserver : HKServerObservers) {
-            hkServerObserver.HKServerStateNotify(available);
-        }
+        hkServerObserver.hkServerAvailableNotify(available);
+
     }
 
 
@@ -69,25 +59,38 @@ public class HkAgentRegistrar {
      * 激活Register自律行为
      * 注册失败会排除异常
      */
-    public void active() throws Exception {
+    public void active(){
         checkConfig();
-        RegisterResponseVO registerVO = register();
-        if (Objects.isNull(registerVO) || !Boolean.TRUE.equals(registerVO.getSuccess())){
-            logger.error("注册失败:{}",registerVO);
-            throw new RuntimeException("注册失败");
+        RegisterResponseVO registerVO = null;
+        Exception exception = null;
+        try {
+            registerVO = requestRegister();
+        } catch (Exception e) {
+            exception = e;
+            logger.info("Agent注册失败",e);
         }
+        // 出现异常或者响应失败均视作失败
+        if(exception != null || registerVO == null || Boolean.FALSE.equals(registerVO.getSuccess())){
+            serviceIsAvailable(false);
+            // 开启健康检查 or 自动注册
+            healthStatusCheck();
+            return;
+        }
+        serviceIsAvailable(true);
+
         logger.info("agent注册成功:{}", registerVO.getSuccess());
-        // 开启健康检查
-        healthStatusCheck();
         // 注册关闭钩子
         Runtime.getRuntime().addShutdownHook(new Thread(this::deregister));
+        // 开启健康检查 和 自动注册
+        healthStatusCheck();
 
     }
 
     /**
      * 注册接口
+     * 返回null、抛出异常、均视作注册失败
      */
-    public RegisterResponseVO register() throws IOException {
+    public RegisterResponseVO requestRegister() throws IOException {
         // 构建请求
         RegisterRequest registerRequest = getRegisterRequest();
         String url = HkUtils.getUrl(configure.getHkServerIp(), configure.getHkServerPort(), ApiPathConstant.REGISTER_URL);
@@ -96,7 +99,7 @@ public class HkAgentRegistrar {
 
     private RegisterRequest getRegisterRequest() {
         RegisterRequest registerRequest = new RegisterRequest();
-        registerRequest.setInstanceId(configure.getInstanceId());
+        registerRequest.setInstanceId(instanceId);
         registerRequest.setAgentName(configure.getAgentName());
         registerRequest.setArtifactId(configure.getArtifactId());
         registerRequest.setGroupId(configure.getGroupId());
@@ -118,7 +121,7 @@ public class HkAgentRegistrar {
     public void deregister() {
         String url = HkUtils.getUrl(configure.getHkServerIp(), configure.getHkServerPort(), ApiPathConstant.DEREGISTER_URL);
         DeregisterRequest deregisterRequest = new DeregisterRequest();
-        deregisterRequest.setInstanceId(configure.getInstanceId());
+        deregisterRequest.setInstanceId(instanceId);
         try {
             HttpClientUtil.postByJson(url, deregisterRequest);
         } catch (IOException e) {
@@ -133,6 +136,7 @@ public class HkAgentRegistrar {
 
         Integer healthCheckCycle = configure.getHkHealthCheckCycle();
         if (0 == healthCheckCycle){
+            logger.info("agent 未设置agent健康检查周期");
             return ;
         }
         String healthCheckUrl = HkUtils.getUrl(configure.getHkServerIp(), configure.getHkServerPort(), ApiPathConstant.HEALTH_CHECK_URL);
@@ -142,7 +146,7 @@ public class HkAgentRegistrar {
             try {
                 AgentStatusRequest agentStatusRequest = new AgentStatusRequest();
                 agentStatusRequest.setTimeStamp(System.currentTimeMillis());
-                agentStatusRequest.setInstanceId(configure.getInstanceId());
+                agentStatusRequest.setInstanceId(instanceId);
                 healthCheckResult = HttpClientUtil.postByJson(healthCheckUrl, agentStatusRequest, Boolean.class);
                 logger.info("健康检查结果:{}",healthCheckResult);
             } catch (Exception e) {
@@ -153,8 +157,9 @@ public class HkAgentRegistrar {
                 // 出现任何异常则视作鹰眼服务器不可用
                 serviceIsAvailable(false);
             }else if(Boolean.FALSE.equals(healthCheckResult)){
+                // 健康检查接口返回false时才重新注册
                 try {
-                    register();
+                    requestRegister();
                     // 否则视作正常响应, 根据返回值判断是否重新注册
                     serviceIsAvailable(true);
                 } catch (Exception e) {

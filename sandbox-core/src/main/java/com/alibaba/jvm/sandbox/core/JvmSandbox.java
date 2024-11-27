@@ -1,23 +1,29 @@
 package com.alibaba.jvm.sandbox.core;
 
+import com.alibaba.jvm.sandbox.api.resource.HKServerObserver;
 import com.alibaba.jvm.sandbox.core.manager.CoreModuleManager;
 import com.alibaba.jvm.sandbox.core.manager.impl.DefaultCoreLoadedClassDataSource;
 import com.alibaba.jvm.sandbox.core.manager.impl.DefaultCoreModuleManager;
 import com.alibaba.jvm.sandbox.core.manager.impl.DefaultProviderManager;
+import com.alibaba.jvm.sandbox.core.manager.impl.CoreAgentInfo;
 import com.alibaba.jvm.sandbox.core.util.SandboxProtector;
 import com.alibaba.jvm.sandbox.core.util.SpyUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.instrument.Instrumentation;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 沙箱
  */
-public class JvmSandbox {
+public class JvmSandbox implements HKServerObserver {
 
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     /**
      * 需要提前加载的sandbox工具类
      */
@@ -31,6 +37,33 @@ public class JvmSandbox {
 
     private final CoreConfigure cfg;
     private final CoreModuleManager coreModuleManager;
+    /**
+     * agent的实例字段
+     */
+    private final String instanceId;
+
+    /**
+     * 维护当前实例的状态
+     */
+    private final CoreAgentInfo coreAgentInfo;
+
+    @Override
+    public void hkServerAvailableNotify(boolean available) {
+        // 初始化时不发送消息
+        if (null == coreAgentInfo.getHkServiceIsAvailable()){
+            coreAgentInfo.setHkServiceIsAvailable(available);
+            return;
+        }
+        // 如果状态没变,不修改模块状态
+        if (coreAgentInfo.getHkServiceIsAvailable() == available){
+            return;
+        }
+        // 如果状态发生变化通知所有模块
+        coreAgentInfo.setHkServiceIsAvailable(available);
+        logger.info("服务器状态发生变化:{}, 通知所有观察者", available);
+        coreModuleManager.hkServerStatePushAllModule(available);
+    }
+
 
     // 判断是否支持native
     private boolean isNativeSupported(Instrumentation inst) {
@@ -49,13 +82,16 @@ public class JvmSandbox {
     public JvmSandbox(final CoreConfigure cfg,
                       final Instrumentation inst) {
         this.cfg = cfg;
-
+        this.instanceId = UUID.randomUUID().toString();
+        this.coreAgentInfo = new CoreAgentInfo();
         // 是否支持Native方法增强
         cfg.setNativeSupported(isNativeSupported(inst));
 
         this.coreModuleManager = SandboxProtector.instance.protectProxy(CoreModuleManager.class, new DefaultCoreModuleManager(
                 cfg,
                 inst,
+                instanceId,
+                coreAgentInfo,
                 new DefaultCoreLoadedClassDataSource(inst, cfg.isEnableUnsafe(), cfg.isNativeSupported()),
                 new DefaultProviderManager(cfg)
         ));
@@ -100,6 +136,15 @@ public class JvmSandbox {
         // 清理Spy
         SpyUtils.clean(cfg.getNamespace());
 
+    }
+
+
+    public CoreAgentInfo getAgentInfo() {
+        return coreAgentInfo;
+    }
+
+    public String getInstanceId() {
+        return instanceId;
     }
 
 }

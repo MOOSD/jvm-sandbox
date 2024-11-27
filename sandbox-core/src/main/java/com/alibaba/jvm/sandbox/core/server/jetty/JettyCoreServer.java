@@ -185,9 +185,7 @@ public class JettyCoreServer implements CoreServer {
             });
             // 如果启用了注册，则进行服务注册
             if (cfg.hkServerRegistryEnable()){
-                hkAgentRegistrar = new HkAgentRegistrar(cfg);
-                // 给注册器添加观察者 todo 注意这里的引用是否会导致内存泄漏
-                hkAgentRegistrar.addHKServerObserver(jvmSandbox.getCoreModuleManager());
+                hkAgentRegistrar = new HkAgentRegistrar(cfg, jvmSandbox);
                 // 激活服务注册
                 hkAgentRegistrar.active();
             }

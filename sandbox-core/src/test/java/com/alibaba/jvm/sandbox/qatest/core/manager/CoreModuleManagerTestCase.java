@@ -146,7 +146,8 @@ public class CoreModuleManagerTestCase {
         return SandboxProtector.instance.protectProxy(CoreModuleManager.class, new DefaultCoreModuleManager(
                 buildingCoreConfigureWithUserModuleLib(moduleJarFiles),
                 new EmptyInstrumentation(),
-                new EmptyCoreLoadedClassDataSource(),
+                "新增的字段",
+                null, new EmptyCoreLoadedClassDataSource(),
                 new EmptyProviderManager()
         )).reset();
     }

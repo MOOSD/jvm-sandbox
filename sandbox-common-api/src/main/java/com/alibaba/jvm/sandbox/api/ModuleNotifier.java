@@ -9,7 +9,7 @@ public interface ModuleNotifier {
      * 模块通知器
      * @param available 鹰眼服务器是否可用
      */
-    default void HKServerStateChange(boolean available){
+    default void hkServerStateChange(boolean available){
 
     }
 }

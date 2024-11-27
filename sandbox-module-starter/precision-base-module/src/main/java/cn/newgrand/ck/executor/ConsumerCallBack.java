@@ -3,7 +3,7 @@ package cn.newgrand.ck.executor;
 /**
  * Processor的回调接口
  */
-public interface ProcessorCallBack<T> {
+public interface ConsumerCallBack<T> {
 
     /**
      * 停止数据处理

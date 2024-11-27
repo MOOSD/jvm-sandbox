@@ -3,6 +3,7 @@ package com.alibaba.jvm.sandbox.core;
 import com.alibaba.jvm.sandbox.api.Information;
 import com.alibaba.jvm.sandbox.core.util.FeatureCodec;
 import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -93,11 +94,11 @@ public class CoreConfigure {
 
     private static final FeatureCodec codec = new FeatureCodec(';', '=');
 
+    /**
+     * 配置文件中的配置
+     */
     private final Map<String, String> featureMap = new LinkedHashMap<>();
 
-    @Getter
-    private String instanceId;
-    
 
     private CoreConfigure(final String featureString,
                           final String propertiesFilePath) {
@@ -112,7 +113,6 @@ public class CoreConfigure {
         initConfig(featureMap, propertiesMap);
     }
     private void initConfig(Map<String, String> featureMap, Map<String, String> propertiesMap ){
-        this.instanceId = String.valueOf(UUID.randomUUID());
         this.featureMap.putAll(merge(featureMap, propertiesMap));
     }
 

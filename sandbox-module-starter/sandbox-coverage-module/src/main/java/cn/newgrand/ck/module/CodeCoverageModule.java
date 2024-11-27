@@ -1,15 +1,18 @@
 package cn.newgrand.ck.module;
 
 
-
-import cn.newgrand.ck.executor.*;
+import cn.newgrand.ck.executor.DataProcessor;
 import cn.newgrand.ck.pojo.MethodCoverage;
+import cn.newgrand.ck.processor.CoverageDataConsumer;
+import cn.newgrand.ck.reporter.DataReporter;
+import cn.newgrand.ck.reporter.LogDataReporter;
 import com.alibaba.jvm.sandbox.api.Information;
 import com.alibaba.jvm.sandbox.api.LoadCompleted;
 import com.alibaba.jvm.sandbox.api.Module;
 import com.alibaba.jvm.sandbox.api.listener.ext.Advice;
 import com.alibaba.jvm.sandbox.api.listener.ext.AdviceListener;
 import com.alibaba.jvm.sandbox.api.listener.ext.EventWatchBuilder;
+import com.alibaba.jvm.sandbox.api.resource.AgentInfo;
 import com.alibaba.jvm.sandbox.api.resource.ConfigInfo;
 import com.alibaba.jvm.sandbox.api.resource.ModuleEventWatcher;
 import org.kohsuke.MetaInfServices;
@@ -17,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.Objects;
 
 @MetaInfServices(Module.class)
 @Information(id = "code-coverage", version = "0.0.1")
@@ -29,7 +32,10 @@ public class CodeCoverageModule implements Module, LoadCompleted {
     @Resource
     private ConfigInfo configInfo;
 
-    private CoverageDataProcessor coverageDataProcessor;
+    @Resource
+    private AgentInfo agentInfo;
+
+    private DataProcessor<MethodCoverage> dataProcessor;
 
     /**
      * 按照方法级别手机覆盖率信息
@@ -62,13 +68,15 @@ public class CodeCoverageModule implements Module, LoadCompleted {
 
             @Override
             protected void after(Advice advice) {
-                coverageDataProcessor.add(advice.attachment());
+                dataProcessor.add(advice.attachment());
             }
 
 
         };
-        // 激活executor
-        coverageDataProcessor.active();
+        // 如果服务器状态可用，则启用数据处理器
+        if(agentInfo.hKServiceIsAvailable()){
+            dataProcessor.enable();
+        }
 
         // 开启监听
         new EventWatchBuilder(moduleEventWatcher, EventWatchBuilder.PatternType.REGEX)//一定要选择这种表达式模式
@@ -80,6 +88,15 @@ public class CodeCoverageModule implements Module, LoadCompleted {
         log.info("覆盖率模块加载完成");
     }
 
+    @Override
+    public void hkServerStateChange(boolean available) {
+        log.info("鹰眼服务端状态发生变化：{}",available);
+        if (available){
+            dataProcessor.enable();
+        }else
+            dataProcessor.disable();
+    }
+
     //构建匹配类的正则表达式
     private String buildClassPattern() {
         return "^cn\\.newgrand.*";
@@ -87,8 +104,13 @@ public class CodeCoverageModule implements Module, LoadCompleted {
 
     private void initModule(){
         log.info("覆盖率模块加载开始");
+        // 创建数据发送器
+        DataReporter dataReporter = new LogDataReporter(configInfo);
+        // 创建消费者
+        CoverageDataConsumer coverageDataConsumer = new CoverageDataConsumer(configInfo,dataReporter,agentInfo);
+
         // 创建数据消费者
-        this.coverageDataProcessor = new CoverageDataProcessor(configInfo,2,10240);
+        this.dataProcessor = new DataProcessor<>(2,10240, coverageDataConsumer);
     }
 
 }
