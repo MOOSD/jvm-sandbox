@@ -223,4 +223,7 @@ public interface ConfigInfo {
     String getDomainId();
 
     String getProjectId();
+
+    String getModuleCoveragePattern();
+    String getModuleTracePattern();
 }

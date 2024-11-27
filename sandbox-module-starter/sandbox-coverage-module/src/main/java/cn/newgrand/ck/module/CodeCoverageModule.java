@@ -15,6 +15,7 @@ import com.alibaba.jvm.sandbox.api.listener.ext.EventWatchBuilder;
 import com.alibaba.jvm.sandbox.api.resource.AgentInfo;
 import com.alibaba.jvm.sandbox.api.resource.ConfigInfo;
 import com.alibaba.jvm.sandbox.api.resource.ModuleEventWatcher;
+import org.apache.commons.codec.binary.StringUtils;
 import org.kohsuke.MetaInfServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,7 +100,13 @@ public class CodeCoverageModule implements Module, LoadCompleted {
 
     //构建匹配类的正则表达式
     private String buildClassPattern() {
-        return "^cn\\.newgrand.*";
+        String moduleCoveragePattern = configInfo.getModuleCoveragePattern();
+        if (Objects.isNull(moduleCoveragePattern) || moduleCoveragePattern.isEmpty()){
+            log.info("未指定项目所用类通配符，使用默认通配符");
+            return "^cn\\.newgrand.*";
+        }
+        log.info("覆盖率所用的类通配符是:{}",moduleCoveragePattern);
+        return moduleCoveragePattern;
     }
 
     private void initModule(){
