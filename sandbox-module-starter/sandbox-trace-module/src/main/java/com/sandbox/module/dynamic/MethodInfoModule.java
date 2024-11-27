@@ -92,6 +92,9 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         }
                         methodTree.setCurrentData(methodInfo);
                         methodTree.end();
+                        if(advice.isProcessTop()){
+                            logger.info("requestTtl:{}",TraceIdModule.getRequestTtl());
+                        }
                         if(advice.isProcessTop()&&Objects.nonNull(TraceIdModule.getRequestTtl())){
                             dataProcessor.add(advice.getProcessTop().attachment());
                         }
@@ -104,7 +107,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         methodInfo.setLog(advice.getThrowable().toString());
                         methodTree.begin(methodInfo).end();
                         methodTree.end();
-                        if(advice.isProcessTop()&&Objects.nonNull(TraceIdModule.getRequestTtl())){
+                        if(advice.isProcessTop()&& Objects.nonNull(TraceIdModule.getRequestTtl())){
                             dataProcessor.add(advice.getProcessTop().attachment());
                         }
                     }
