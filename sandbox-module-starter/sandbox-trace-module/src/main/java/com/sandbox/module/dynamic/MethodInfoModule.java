@@ -58,8 +58,10 @@ public class MethodInfoModule implements Module, LoadCompleted {
 
                     public MethodInfo getMethodInfo(final Advice advice){
                         MethodInfo methodInfo = new MethodInfo();
-                        methodInfo.setClassName(advice.getBehavior().getDeclaringClass().getName());
-                        methodInfo.setMethodName(advice.getBehavior().getName());
+                        String methodName = advice.getBehavior().getName();
+                        String className = Objects.nonNull(advice.getTarget()) ? advice.getTarget().getClass().getName() : "null";
+                        methodInfo.setClassName(className);
+                        methodInfo.setMethodName(methodName);
                         if(Objects.nonNull(advice.getParameterArray())){
                             Object[] objectArray = advice.getParameterArray();
                             String[] classNames = new String[objectArray.length];
@@ -84,9 +86,8 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         }
                         methodTree.setCurrentData(methodInfo);
                         methodTree.end();
-                        if(advice.isProcessTop()){
-                            sendMessage(advice);
-                        }
+
+                        sendMessage(advice);
                     }
 
                     @Override
@@ -96,9 +97,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         methodInfo.setLog(advice.getThrowable().toString());
                         methodTree.begin(methodInfo).end();
                         methodTree.end();
-                        if(advice.isProcessTop()){
-                            sendMessage(advice);
-                        }
+                        sendMessage(advice);
                     }
                 });
     }
@@ -114,8 +113,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
 
     private void sendMessage(Advice advice){
         if(advice.isProcessTop()){
-            if(Objects.isNull(advice.getTarget()) || advice.getTarget().getClass().getName().contains("Controller")){
-                final MethodTree methodTree = advice.getProcessTop().attachment();
+            final MethodTree methodTree = advice.getProcessTop().attachment();
                 String json = null;
                 try {
                     ObjectMapper objectMapper = new ObjectMapper();
@@ -126,7 +124,6 @@ public class MethodInfoModule implements Module, LoadCompleted {
                     logger.error("序列化方法调用链时发生异常: ", e);
                     throw new RuntimeException(e);
                 }
-            }
         }
     }
 }
