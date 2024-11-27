@@ -47,7 +47,7 @@ public class AgentBoot {
      * 配置的key名称
      */
     private static final String KEY_MODULE_COVERAGE_PATTERN = "module.coverage.pattern";
-    private static final String KEY_MODULE_TRACE_PATTERN = "module.coverage.pattern";
+    private static final String KEY_MODULE_TRACE_PATTERN = "module.trace.pattern";
     private static final String KEY_HK_SERVER_IP = "hk.server.ip";
     private static final String KEY_SERVER_IP = "server.ip";
     private static final String KEY_SERVER_PORT = "server.port";
