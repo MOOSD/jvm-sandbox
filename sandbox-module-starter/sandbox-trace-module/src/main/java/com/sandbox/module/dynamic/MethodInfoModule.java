@@ -109,9 +109,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         }
                     }
                 });
-        if (agentInfo.hKServiceIsAvailable()) {
             dataProcessor.enable();
-        }
     }
 
     private void initModule() {
