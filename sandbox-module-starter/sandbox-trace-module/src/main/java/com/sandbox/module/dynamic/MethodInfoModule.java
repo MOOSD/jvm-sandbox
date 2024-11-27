@@ -1,11 +1,16 @@
 package com.sandbox.module.dynamic;
 
+import cn.newgrand.ck.executor.DataProcessor;
+import cn.newgrand.ck.reporter.DataReporter;
+import cn.newgrand.ck.reporter.LogDataReporter;
 import com.alibaba.jvm.sandbox.api.Information;
 import com.alibaba.jvm.sandbox.api.LoadCompleted;
 import com.alibaba.jvm.sandbox.api.Module;
 import com.alibaba.jvm.sandbox.api.listener.ext.Advice;
 import com.alibaba.jvm.sandbox.api.listener.ext.AdviceListener;
 import com.alibaba.jvm.sandbox.api.listener.ext.EventWatchBuilder;
+import com.alibaba.jvm.sandbox.api.resource.AgentInfo;
+import com.alibaba.jvm.sandbox.api.resource.ConfigInfo;
 import com.alibaba.jvm.sandbox.api.resource.ModuleEventWatcher;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -13,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sandbox.module.Context.RequestContext;
 import com.sandbox.module.node.MethodInfo;
 import com.sandbox.module.node.MethodTree;
+import com.sandbox.module.processor.CoverageDataConsumer;
 import org.kohsuke.MetaInfServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +36,14 @@ public class MethodInfoModule implements Module, LoadCompleted {
     @Resource
     private ModuleEventWatcher moduleEventWatcher;
 
+    @Resource
+    private ConfigInfo configInfo;
+
+    @Resource
+    private AgentInfo agentInfo;
+
+    private DataProcessor<MethodTree> dataProcessor;
+
     @Override
     public void loadCompleted() {
 
@@ -46,7 +60,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
                     @Override
                     protected void before(Advice advice) throws Throwable {
                         final MethodTree methodTree;
-                        if(advice.isProcessTop()){
+                        if (advice.isProcessTop()) {
                             methodTree = new MethodTree(getMethodInfo(advice));
                             advice.attach(methodTree);
                         } else {
@@ -56,13 +70,13 @@ public class MethodInfoModule implements Module, LoadCompleted {
                     }
 
 
-                    public MethodInfo getMethodInfo(final Advice advice){
+                    public MethodInfo getMethodInfo(final Advice advice) {
                         MethodInfo methodInfo = new MethodInfo();
                         String methodName = advice.getBehavior().getName();
                         String className = Objects.nonNull(advice.getTarget()) ? advice.getTarget().getClass().getName() : "null";
                         methodInfo.setClassName(className);
                         methodInfo.setMethodName(methodName);
-                        if(Objects.nonNull(advice.getParameterArray())){
+                        if (Objects.nonNull(advice.getParameterArray())) {
                             Object[] objectArray = advice.getParameterArray();
                             String[] classNames = new String[objectArray.length];
                             for (int i = 0; i < objectArray.length; i++) {
@@ -71,22 +85,23 @@ public class MethodInfoModule implements Module, LoadCompleted {
                             methodInfo.setParams(classNames);
                         }
                         RequestContext requestTtl = TraceIdModule.getRequestTtl();
-                        if(Objects.nonNull(requestTtl)){
+                        if (Objects.nonNull(requestTtl)) {
                             methodInfo.setTraceId(requestTtl.getTraceId());
                             methodInfo.setSpanId(requestTtl.getSpanId());
                         }
                         return methodInfo;
                     }
+
                     @Override
                     protected void afterReturning(Advice advice) throws Throwable {
                         final MethodTree methodTree = advice.getProcessTop().attachment();
                         MethodInfo methodInfo = methodTree.getCurrentData();
-                        if(advice.getReturnObj() != null){
+                        if (advice.getReturnObj() != null) {
                             methodInfo.setData(advice.getReturnObj().toString());
                         }
                         methodTree.setCurrentData(methodInfo);
                         methodTree.end();
-                        sendMessage(advice);
+                        dataProcessor.add(advice.getProcessTop().attachment());
                     }
 
                     @Override
@@ -96,46 +111,29 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         methodInfo.setLog(advice.getThrowable().toString());
                         methodTree.begin(methodInfo).end();
                         methodTree.end();
-                        sendMessage(advice);
+                        dataProcessor.add(advice.getProcessTop().attachment());
                     }
                 });
+        if (agentInfo.hKServiceIsAvailable()) {
+            dataProcessor.enable();
+        }
     }
 
+    private void initModule() {
+        logger.info("覆盖率模块加载开始");
+        // 创建数据发送器
+        DataReporter dataReporter = new LogDataReporter(configInfo);
+        // 创建消费者
+        CoverageDataConsumer coverageDataConsumer = new CoverageDataConsumer(configInfo, dataReporter, agentInfo);
+
+        // 创建数据消费者
+        this.dataProcessor = new DataProcessor<>(1, 100, coverageDataConsumer);
+    }
 
 
     //根据实际情况 构建匹配类的正则表达式
     private String buildClassPattern() {
         return "^cn\\.newgrand\\.pm\\.pcm\\.contract.*";
 //        return "^cn\\.newgrand\\.ck\\.(controller|service|util|mapper).*";
-    }
-
-
-    private void sendMessage(Advice advice){
-        if(advice.isProcessTop()){
-            if(Objects.isNull(advice.getTarget()) || advice.getTarget().getClass().getName().contains("Controller")){
-                final MethodTree methodTree = advice.getProcessTop().attachment();
-                String json = null;
-                try {
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-                    json = objectMapper.writeValueAsString(methodTree.convertToDTO(methodTree.getCurrent()));
-                    logger.info("方法[{}]调用链路:{} ", advice.getBehavior().getName(), json);
-                } catch (JsonProcessingException e) {
-                    logger.error("序列化方法调用链时发生异常: ", e);
-                    throw new RuntimeException(e);
-                }
-            }else{
-                try{
-                    final MethodTree methodTree = advice.getProcessTop().attachment();
-                    if(methodTree.isTop()){
-                        logger.info("方法为根方法");
-                    }else{
-                        logger.info("方法{}调用链路:{} ", advice.getBehavior().getName(), methodTree.convertToDTO(methodTree.getCurrent()));
-                    }
-                } catch (Exception e){
-                    logger.error("方法{}序列化报错{} ", advice.getBehavior().getName(), e.getMessage());
-                }
-            }
-        }
     }
 }
