@@ -100,54 +100,6 @@ public class MethodInfoModule implements Module, LoadCompleted {
                             sendMessage(advice);
                         }
                     }
-
-                    @Override
-                    protected void beforeCall(final Advice advice,
-                                              final int callLineNum,
-                                              final String callJavaClassName,
-                                              final String callJavaMethodName,
-                                              final String callJavaMethodDesc) {
-//                        final MethodTree methodTree = advice.getProcessTop().attachment();
-//                        MethodInfo methodInfo = new MethodInfo();
-//                        methodInfo.setClassName(callJavaClassName+"-"+callLineNum);
-//                        methodInfo.setMethodName(callJavaMethodName);
-//                        RequestContext requestTtl = TraceIdModule.getRequestTtl();
-//                        if(Objects.nonNull(requestTtl)){
-//                            methodInfo.setTraceId(requestTtl.getTraceId());
-//                            methodInfo.setSpanId(requestTtl.getSpanId());
-//                        }
-//                        methodTree.begin(methodInfo);
-                    }
-
-                    @Override
-                    protected void afterCallReturning(final Advice advice,
-                                                      final int callLineNum,
-                                                      final String callJavaClassName,
-                                                      final String callJavaMethodName,
-                                                      final String callJavaMethodDesc) {
-//                        final MethodTree methodTree = advice.getProcessTop().attachment();
-//                        methodTree.end();
-                    }
-
-                    @Override
-                    protected void afterCallThrowing(final Advice advice,
-                                                     final int callLineNum,
-                                                     final String callJavaClassName,
-                                                     final String callJavaMethodName,
-                                                     final String callJavaMethodDesc,
-                                                     final String callThrowJavaClassName) {
-//                        final MethodTree methodTree = advice.getProcessTop().attachment();
-//
-//                        MethodInfo methodInfo = new MethodInfo();
-//                        methodInfo.setClassName(advice.getThrowable().getClass().getName());
-//                        RequestContext requestTtl = TraceIdModule.getRequestTtl();
-//                        if(Objects.nonNull(requestTtl)){
-//                            methodInfo.setTraceId(requestTtl.getTraceId());
-//                            methodInfo.setSpanId(requestTtl.getSpanId());
-//                        }
-//                        methodTree.set(methodInfo).end();
-                    }
-
                 });
     }
 
@@ -162,7 +114,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
 
     private void sendMessage(Advice advice){
         if(advice.isProcessTop()){
-            if(advice.getTarget().getClass().getName().contains("Controller")){
+            if(Objects.isNull(advice.getTarget()) || advice.getTarget().getClass().getName().contains("Controller")){
                 final MethodTree methodTree = advice.getProcessTop().attachment();
                 String json = null;
                 try {
