@@ -75,14 +75,6 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         String className = Objects.nonNull(advice.getTarget()) ? advice.getTarget().getClass().getName() : "null";
                         methodInfo.setClassName(className);
                         methodInfo.setMethodName(methodName);
-                        if (Objects.nonNull(advice.getParameterArray())) {
-                            Object[] objectArray = advice.getParameterArray();
-                            String[] classNames = new String[objectArray.length];
-                            for (int i = 0; i < objectArray.length; i++) {
-                                classNames[i] = objectArray[i].getClass().getName();  // 获取类的完全限定名
-                            }
-                            methodInfo.setParams(classNames);
-                        }
                         RequestContext requestTtl = TraceIdModule.getRequestTtl();
                         if (Objects.nonNull(requestTtl)) {
                             methodInfo.setTraceId(requestTtl.getTraceId());
@@ -100,7 +92,9 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         }
                         methodTree.setCurrentData(methodInfo);
                         methodTree.end();
-                        dataProcessor.add(advice.getProcessTop().attachment());
+                        if(advice.isProcessTop()&&advice.getTarget().getClass().getName().contains("Controller")){
+                            dataProcessor.add(advice.getProcessTop().attachment());
+                        }
                     }
 
                     @Override
@@ -110,12 +104,12 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         methodInfo.setLog(advice.getThrowable().toString());
                         methodTree.begin(methodInfo).end();
                         methodTree.end();
-                        dataProcessor.add(advice.getProcessTop().attachment());
+                        if(advice.isProcessTop()&&advice.getTarget().getClass().getName().contains("Controller")){
+                            dataProcessor.add(advice.getProcessTop().attachment());
+                        }
                     }
                 });
-        if (agentInfo.hKServiceIsAvailable()) {
             dataProcessor.enable();
-        }
     }
 
     private void initModule() {
@@ -126,13 +120,13 @@ public class MethodInfoModule implements Module, LoadCompleted {
         CoverageDataConsumer coverageDataConsumer = new CoverageDataConsumer(configInfo, dataReporter, agentInfo);
 
         // 创建数据消费者
-        this.dataProcessor = new DataProcessor<>(1, 100, coverageDataConsumer);
+        this.dataProcessor = new DataProcessor<>(3, 100, coverageDataConsumer);
     }
 
 
     //根据实际情况 构建匹配类的正则表达式
     private String buildClassPattern() {
-        return "^cn\\.newgrand\\.pm\\.pcm\\.contract.*";
+        return "^cn\\.newgrand\\.ck.*";
 //        return "^cn\\.newgrand\\.ck\\.(controller|service|util|mapper).*";
     }
 }

@@ -49,7 +49,7 @@ public class CoverageDataConsumer implements DataConsumer<MethodTree> {
     private void tryReport(){
         try {
             writeLock.lock();
-            if (sendClassCoverage.size() > 20) {
+            if (sendClassCoverage.size() > 2) {
                 dataReporter.report(sendClassCoverage);
                 sendClassCoverage.clear();
             }
