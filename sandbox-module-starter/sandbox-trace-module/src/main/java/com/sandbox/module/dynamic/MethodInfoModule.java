@@ -105,7 +105,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
 
     //根据实际情况 构建匹配类的正则表达式
     private String buildClassPattern() {
-        return "^cn\\.newgrand.*";
+        return "^cn\\.newgrand\\.pm\\.pcm\\.contract.*";
 //        return "^cn\\.newgrand\\.ck\\.(controller|service|util|mapper).*";
     }
 
