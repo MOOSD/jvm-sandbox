@@ -75,14 +75,6 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         String className = Objects.nonNull(advice.getTarget()) ? advice.getTarget().getClass().getName() : "null";
                         methodInfo.setClassName(className);
                         methodInfo.setMethodName(methodName);
-                        if (Objects.nonNull(advice.getParameterArray())) {
-                            Object[] objectArray = advice.getParameterArray();
-                            String[] classNames = new String[objectArray.length];
-                            for (int i = 0; i < objectArray.length; i++) {
-                                classNames[i] = objectArray[i].getClass().getName();  // 获取类的完全限定名
-                            }
-                            methodInfo.setParams(classNames);
-                        }
                         RequestContext requestTtl = TraceIdModule.getRequestTtl();
                         if (Objects.nonNull(requestTtl)) {
                             methodInfo.setTraceId(requestTtl.getTraceId());
@@ -100,7 +92,9 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         }
                         methodTree.setCurrentData(methodInfo);
                         methodTree.end();
-                        dataProcessor.add(advice.getProcessTop().attachment());
+                        if(advice.isProcessTop()&&advice.getTarget().getClass().getName().contains("Controller")){
+                            dataProcessor.add(advice.getProcessTop().attachment());
+                        }
                     }
 
                     @Override
@@ -110,7 +104,9 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         methodInfo.setLog(advice.getThrowable().toString());
                         methodTree.begin(methodInfo).end();
                         methodTree.end();
-                        dataProcessor.add(advice.getProcessTop().attachment());
+                        if(advice.isProcessTop()&&advice.getTarget().getClass().getName().contains("Controller")){
+                            dataProcessor.add(advice.getProcessTop().attachment());
+                        }
                     }
                 });
         if (agentInfo.hKServiceIsAvailable()) {
