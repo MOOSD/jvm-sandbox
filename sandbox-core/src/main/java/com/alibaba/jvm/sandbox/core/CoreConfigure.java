@@ -84,6 +84,11 @@ public class CoreConfigure {
     private static final String KEY_GIT_ID = "hk.git.Id";
     private static final String KEY_DOMAIN_ID = "hk.dimain.id";
 
+    /**
+     * 模块相关的配置
+     */
+    private static final String KEY_MODULE_COVERAGE_PATTERN = "module.coverage.pattern";
+    private static final String KEY_MODULE_TRACE_PATTERN = "module.coverage.pattern";
 
 
     // 受保护key数组，在保护key范围之内，以用户传递的配置为准，系统配置不允许覆盖
@@ -510,5 +515,13 @@ public class CoreConfigure {
     public void setDomainId(String domainId) {
         featureMap.put(KEY_PROJECT_ID, domainId);
     }
+
+    public String getModuleCoveragePattern(){
+        return featureMap.get(KEY_MODULE_COVERAGE_PATTERN);
+    }
+    public String getModuleTracePattern(){
+        return featureMap.get(KEY_MODULE_TRACE_PATTERN);
+    }
+
 
 }

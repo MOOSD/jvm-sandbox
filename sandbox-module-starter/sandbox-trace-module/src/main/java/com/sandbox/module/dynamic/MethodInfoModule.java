@@ -109,7 +109,9 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         }
                     }
                 });
+        if (agentInfo.hKServiceIsAvailable()) {
             dataProcessor.enable();
+        }
     }
 
     private void initModule() {
@@ -120,13 +122,19 @@ public class MethodInfoModule implements Module, LoadCompleted {
         CoverageDataConsumer coverageDataConsumer = new CoverageDataConsumer(configInfo, dataReporter, agentInfo);
 
         // 创建数据消费者
-        this.dataProcessor = new DataProcessor<>(3, 100, coverageDataConsumer);
+        this.dataProcessor = new DataProcessor<>(1, 100, coverageDataConsumer);
     }
 
 
     //根据实际情况 构建匹配类的正则表达式
     private String buildClassPattern() {
-        return "^cn\\.newgrand\\.ck.*";
+        String moduleTracePattern = configInfo.getModuleTracePattern();
+        if (Objects.isNull(moduleTracePattern) || moduleTracePattern.isEmpty()){
+            logger.info("未指定项目所用类通配符，使用默认通配符");
+            return "^cn\\.newgrand\\.pm\\.pcm\\.contract.*";
+        }
+        logger.info("项目所用类通配符:{}",moduleTracePattern);
+        return moduleTracePattern;
 //        return "^cn\\.newgrand\\.ck\\.(controller|service|util|mapper).*";
     }
 }

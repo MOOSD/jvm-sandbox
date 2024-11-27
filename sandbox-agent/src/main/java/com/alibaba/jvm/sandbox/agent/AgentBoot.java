@@ -42,12 +42,24 @@ public class AgentBoot {
         MF_KEY_MAP.put("mf.git-remote-url", "Git-Remote-Url");
 
     }
+
+    /**
+     * 配置的key名称
+     */
+    private static final String KEY_MODULE_COVERAGE_PATTERN = "module.coverage.pattern";
+    private static final String KEY_MODULE_TRACE_PATTERN = "module.trace.pattern";
     private static final String KEY_HK_SERVER_IP = "hk.server.ip";
     private static final String KEY_SERVER_IP = "server.ip";
     private static final String KEY_SERVER_PORT = "server.port";
     private static final String KEY_AGENT_NAME = "agent.name";
     private static final String KEY_HOST_NAME = "host.name";
     private static final String KEY_AGENT_ENV_NAME = "agent.env.name";
+
+    /**
+     * 支持的环境变量名称
+     */
+    private static final String HK_MODULE_COVERAGE_PATTERN = "MODULE_COV_PATTERN";
+    private static final String HK_MODULE_TRACE_PATTERN = "MODULE_TRACE_PATTERN";
     private static final String HK_SERVER_IP_ENV_NAME = "HK_SERVER_IP";
     private static final String[] HK_AGENT_NAME_ENV_NAMES = {"HK_AGENT_NAME","SW_AGENT_NAME"};
     private static final String HK_ENV_NAME_ENV_NAME = "HK_ENV_NAME";
@@ -147,6 +159,12 @@ public class AgentBoot {
 
         // 添加主机名信息
         appendNonnullFromFeatureMap(featureSB, KEY_HOST_NAME, getHostName());
+
+        // 添加覆盖率模块的配置信息
+        appendNonnullFromFeatureMap(featureSB, KEY_MODULE_COVERAGE_PATTERN, getCoveragePattern(featureMap));
+
+        // 添加调用链路模块的配置信息
+        appendNonnullFromFeatureMap(featureSB, KEY_MODULE_TRACE_PATTERN, getTracePattern(featureMap));
         return featureSB.toString();
     }
 
@@ -230,6 +248,15 @@ public class AgentBoot {
         if (StringUtils.isNotBlankString(value)) {
             featureSB.append(format("%s=%s;", key,value));
         }
+    }
+
+
+    private static String getCoveragePattern(Map<String, String> featureMap){
+        return getConfigFromFeatureMapAndEnv(KEY_MODULE_COVERAGE_PATTERN, HK_MODULE_COVERAGE_PATTERN, featureMap);
+    }
+
+    private static String getTracePattern(Map<String, String> featureMap) {
+        return getConfigFromFeatureMapAndEnv(KEY_MODULE_TRACE_PATTERN, HK_MODULE_TRACE_PATTERN, featureMap);
     }
 
     private static String getHkServerIp(Map<String, String> featureMap){

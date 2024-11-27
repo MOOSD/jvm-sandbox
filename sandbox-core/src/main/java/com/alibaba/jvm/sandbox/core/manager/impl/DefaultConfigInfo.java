@@ -223,5 +223,11 @@ class DefaultConfigInfo implements ConfigInfo {
         return cfg.getProjectId();
     }
 
+    public String getModuleCoveragePattern(){
+        return cfg.getModuleCoveragePattern();
+    }
+    public String getModuleTracePattern(){
+        return cfg.getModuleTracePattern();
+    }
 
 }
