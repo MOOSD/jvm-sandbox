@@ -92,10 +92,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         }
                         methodTree.setCurrentData(methodInfo);
                         methodTree.end();
-                        if(advice.isProcessTop()){
-                            logger.info("requestTtl:{}",TraceIdModule.getRequestTtl());
-                        }
-                        if(advice.isProcessTop()&&Objects.nonNull(TraceIdModule.getRequestTtl())){
+                        if(Objects.nonNull(TraceIdModule.getRequestTtl())){
                             dataProcessor.add(advice.getProcessTop().attachment());
                         }
                     }
