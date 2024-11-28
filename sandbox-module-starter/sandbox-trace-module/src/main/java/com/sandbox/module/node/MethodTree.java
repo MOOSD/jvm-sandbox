@@ -199,7 +199,9 @@ public class MethodTree {
             this.parent = parent;
             this.data = data;
             this.depth = (parent == null) ? 0 : parent.depth + 1;
-            parent.children.add(this);
+            if (parent != null) {
+                parent.children.add(this);
+            }
         }
 
         private MethodNode(MethodInfo data) {
