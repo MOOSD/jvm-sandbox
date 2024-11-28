@@ -137,7 +137,7 @@ public class MethodTree {
         dto.setBeginTimestamp(node.beginTimestamp);
         dto.setEndTimestamp(node.endTimestamp);
 
-// 使用迭代法代替递归法（适用于大树结构）
+        // 使用迭代法代替递归法（适用于大树结构）
         Deque<MethodNode> stack = new ArrayDeque<>();
         Deque<MethodTreeDTO> dtoStack = new ArrayDeque<>();
         stack.push(node);
@@ -147,25 +147,30 @@ public class MethodTree {
             MethodNode current = stack.pop();
             MethodTreeDTO currentDTO = dtoStack.pop();
 
-            // 预分配子节点列表，避免多次动态扩容
-            List<MethodTreeDTO> children = new ArrayList<>(current.children.size());
+            // 避免 ConcurrentModificationException：将 children 复制到新集合中
+            if (!current.children.isEmpty()) {
+                // 预分配子节点列表，避免多次动态扩容
+                List<MethodTreeDTO> children = new ArrayList<>(current.children.size());
 
-            for (MethodNode child : current.children) {
-                MethodTreeDTO childDTO = new MethodTreeDTO();
-                childDTO.setMethodInfo(child.data);
-                childDTO.setBeginTimestamp(child.beginTimestamp);
-                childDTO.setEndTimestamp(child.endTimestamp);
-                childDTO.setDepth(child.depth);
-                children.add(childDTO);
-                stack.push(child);
-                dtoStack.push(childDTO);
+                // 使用一个临时列表来存储子节点
+                List<MethodNode> childNodes = new ArrayList<>(current.children);
+
+                for (MethodNode child : childNodes) {
+                    MethodTreeDTO childDTO = new MethodTreeDTO();
+                    childDTO.setMethodInfo(child.data);
+                    childDTO.setBeginTimestamp(child.beginTimestamp);
+                    childDTO.setEndTimestamp(child.endTimestamp);
+                    childDTO.setDepth(child.depth);
+                    children.add(childDTO);
+                    stack.push(child);
+                    dtoStack.push(childDTO);
+                }
+
+                currentDTO.setChildren(children);
             }
-
-            currentDTO.setChildren(children);
         }
 
         return dto;
-
     }
 
     public String getCurrentMethodNodeStr() {
