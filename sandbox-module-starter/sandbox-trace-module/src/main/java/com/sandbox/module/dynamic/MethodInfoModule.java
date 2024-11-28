@@ -92,7 +92,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         }
                         methodTree.setCurrentData(methodInfo);
                         methodTree.end();
-                        if(Objects.nonNull(TraceIdModule.getRequestTtl()) && methodTree.isTop()){
+                        if(Objects.nonNull(TraceIdModule.getRequestTtl())){
                             dataProcessor.add(advice.getProcessTop().attachment());
                         }
                     }
