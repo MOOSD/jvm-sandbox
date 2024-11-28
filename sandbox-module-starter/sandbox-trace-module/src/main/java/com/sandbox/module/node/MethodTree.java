@@ -16,6 +16,16 @@ public class MethodTree {
     // 根节点
     private final MethodNode root;
 
+    public Boolean getSend() {
+        return send;
+    }
+
+    public void setSend(Boolean send) {
+        this.send = send;
+    }
+
+    private Boolean send = true;
+
     // 当前节点
     private MethodNode current;
 
@@ -126,7 +136,8 @@ public class MethodTree {
         dto.setMethodInfo(node.data);
         dto.setBeginTimestamp(node.beginTimestamp);
         dto.setEndTimestamp(node.endTimestamp);
-        // 使用迭代法代替递归法（适用于大树结构）
+
+// 使用迭代法代替递归法（适用于大树结构）
         Deque<MethodNode> stack = new ArrayDeque<>();
         Deque<MethodTreeDTO> dtoStack = new ArrayDeque<>();
         stack.push(node);
@@ -135,18 +146,26 @@ public class MethodTree {
         while (!stack.isEmpty()) {
             MethodNode current = stack.pop();
             MethodTreeDTO currentDTO = dtoStack.pop();
+
+            // 预分配子节点列表，避免多次动态扩容
+            List<MethodTreeDTO> children = new ArrayList<>(current.children.size());
+
             for (MethodNode child : current.children) {
                 MethodTreeDTO childDTO = new MethodTreeDTO();
                 childDTO.setMethodInfo(child.data);
                 childDTO.setBeginTimestamp(child.beginTimestamp);
                 childDTO.setEndTimestamp(child.endTimestamp);
                 childDTO.setDepth(child.depth);
-                currentDTO.getChildren().add(childDTO);
+                children.add(childDTO);
                 stack.push(child);
                 dtoStack.push(childDTO);
             }
+
+            currentDTO.setChildren(children);
         }
+
         return dto;
+
     }
 
     public String getCurrentMethodNodeStr() {

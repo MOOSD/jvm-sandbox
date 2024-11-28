@@ -105,7 +105,8 @@ public class MethodInfoModule implements Module, LoadCompleted {
                     protected void afterReturning(Advice advice) throws Throwable {
                         final MethodTree methodTree = advice.getProcessTop().attachment();
                         methodTree.end();
-                        if(Objects.nonNull(TraceIdModule.getRequestTtl()) && methodTree.getCurrentData().getSend()){
+                        if(Objects.nonNull(TraceIdModule.getRequestTtl()) && methodTree.getSend() && methodTree.getCurrentData().getSend()){
+                            methodTree.setSend(false);
                             dataProcessor.add(advice.getProcessTop().attachment());
                         }
                     }
@@ -114,7 +115,8 @@ public class MethodInfoModule implements Module, LoadCompleted {
                     protected void afterThrowing(Advice advice) throws Throwable {
                         final MethodTree methodTree = advice.getProcessTop().attachment();
                         methodTree.end();
-                        if(Objects.nonNull(TraceIdModule.getRequestTtl()) && methodTree.getCurrentData().getSend()){
+                        if(Objects.nonNull(TraceIdModule.getRequestTtl()) && methodTree.getSend() && methodTree.getCurrentData().getSend()){
+                            methodTree.setSend(false);
                             dataProcessor.add(advice.getProcessTop().attachment());
                         }
                     }
