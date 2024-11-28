@@ -6,8 +6,11 @@ public class MethodInfo {
 
     private String className;
     private String methodName;
+    private String[] annotations;
 
     private String log;
+
+    private Boolean isSend = false;
 
     private String data;
 
@@ -25,6 +28,7 @@ public class MethodInfo {
     public void setClassName(String className) {
         this.className = className;
     }
+
 
     public String getMethodName() {
         return methodName;
@@ -74,7 +78,7 @@ public class MethodInfo {
                 ", data='" + data + '\'' +
                 ", traceId='" + traceId + '\'' +
                 ", spanId='" + spanId + '\'' +
-                ", params=" + Arrays.toString(params) +
+                ", annotation=" + Arrays.toString(annotations) +
                 '}';
     }
 
@@ -84,5 +88,21 @@ public class MethodInfo {
 
     public void setParams(String[] params) {
         this.params = params;
+    }
+
+    public String[] getAnnotations() {
+        return annotations;
+    }
+
+    public void setAnnotations(String[] annotation) {
+        this.annotations = annotation;
+    }
+
+    public Boolean getSend() {
+        return isSend;
+    }
+
+    public void setSend(Boolean send) {
+        isSend = send;
     }
 }

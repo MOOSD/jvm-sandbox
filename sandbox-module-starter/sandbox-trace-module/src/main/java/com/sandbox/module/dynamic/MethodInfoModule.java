@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
+import java.lang.annotation.Annotation;
 import java.util.*;
 
 @MetaInfServices(Module.class)
@@ -32,6 +33,9 @@ public class MethodInfoModule implements Module, LoadCompleted {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    private final HashSet<String> annotationSet = new HashSet<>();
+
+    private final String[] defaultAnnotation = {"PostMapping", "GetMapping", "RequestMapping","PutMapping","DeleteMapping"};
 
     @Resource
     private ModuleEventWatcher moduleEventWatcher;
@@ -75,6 +79,20 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         String className = Objects.nonNull(advice.getTarget()) ? advice.getTarget().getClass().getName() : "null";
                         methodInfo.setClassName(className);
                         methodInfo.setMethodName(methodName);
+                        //获取注解
+                        if (advice.getBehavior() != null && advice.getBehavior().getAnnotations() != null && advice.getBehavior().getAnnotations().length > 0) {
+                            Annotation[] annotations = advice.getBehavior().getAnnotations();
+                            String[] annotationNames = new String[annotations.length];
+                            boolean isSend = false;
+                            for (int i = 0; i < annotations.length; i++) {
+                                annotationNames[i] = annotations[i].annotationType().getSimpleName();
+                                if(annotationSet.contains(annotationNames[i])){
+                                    isSend = true;
+                                }
+                            }
+                            methodInfo.setSend(isSend);
+                            methodInfo.setAnnotations(annotationNames);
+                        }
                         RequestContext requestTtl = TraceIdModule.getRequestTtl();
                         if (Objects.nonNull(requestTtl)) {
                             methodInfo.setTraceId(requestTtl.getTraceId());
@@ -87,7 +105,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
                     protected void afterReturning(Advice advice) throws Throwable {
                         final MethodTree methodTree = advice.getProcessTop().attachment();
                         methodTree.end();
-                        if(Objects.nonNull(TraceIdModule.getRequestTtl()) && advice.getTarget().getClass().getName().endsWith("Controller")){
+                        if(Objects.nonNull(TraceIdModule.getRequestTtl()) && methodTree.getCurrentData().getSend()){
                             dataProcessor.add(advice.getProcessTop().attachment());
                         }
                     }
@@ -96,7 +114,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
                     protected void afterThrowing(Advice advice) throws Throwable {
                         final MethodTree methodTree = advice.getProcessTop().attachment();
                         methodTree.end();
-                        if(Objects.nonNull(TraceIdModule.getRequestTtl()) && advice.getTarget().getClass().getName().endsWith("Controller")){
+                        if(Objects.nonNull(TraceIdModule.getRequestTtl()) && methodTree.getCurrentData().getSend()){
                             dataProcessor.add(advice.getProcessTop().attachment());
                         }
                     }
@@ -122,7 +140,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
         DataReporter dataReporter = new LogDataReporter(configInfo);
         // 创建消费者
         CoverageDataConsumer coverageDataConsumer = new CoverageDataConsumer(configInfo, dataReporter, agentInfo);
-
+        annotationSet.addAll(Arrays.asList(defaultAnnotation));
         // 创建数据消费者
         this.dataProcessor = new DataProcessor<>(3, 100, coverageDataConsumer);
     }
