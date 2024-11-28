@@ -86,13 +86,8 @@ public class MethodInfoModule implements Module, LoadCompleted {
                     @Override
                     protected void afterReturning(Advice advice) throws Throwable {
                         final MethodTree methodTree = advice.getProcessTop().attachment();
-                        MethodInfo methodInfo = methodTree.getCurrentData();
-                        if (advice.getReturnObj() != null) {
-                            methodInfo.setData(advice.getReturnObj().toString());
-                        }
-                        methodTree.setCurrentData(methodInfo);
                         methodTree.end();
-                        if(Objects.nonNull(TraceIdModule.getRequestTtl())){
+                        if(Objects.nonNull(TraceIdModule.getRequestTtl()) && advice.getTarget().getClass().getName().endsWith("Controller")){
                             dataProcessor.add(advice.getProcessTop().attachment());
                         }
                     }
@@ -100,11 +95,8 @@ public class MethodInfoModule implements Module, LoadCompleted {
                     @Override
                     protected void afterThrowing(Advice advice) throws Throwable {
                         final MethodTree methodTree = advice.getProcessTop().attachment();
-                        MethodInfo methodInfo = methodTree.getCurrentData();
-                        methodInfo.setLog(advice.getThrowable().toString());
-                        methodTree.begin(methodInfo).end();
                         methodTree.end();
-                        if(advice.isProcessTop()&& Objects.nonNull(TraceIdModule.getRequestTtl())){
+                        if(Objects.nonNull(TraceIdModule.getRequestTtl()) && advice.getTarget().getClass().getName().endsWith("Controller")){
                             dataProcessor.add(advice.getProcessTop().attachment());
                         }
                     }
@@ -132,7 +124,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
         CoverageDataConsumer coverageDataConsumer = new CoverageDataConsumer(configInfo, dataReporter, agentInfo);
 
         // 创建数据消费者
-        this.dataProcessor = new DataProcessor<>(1, 100, coverageDataConsumer);
+        this.dataProcessor = new DataProcessor<>(3, 100, coverageDataConsumer);
     }
 
 
@@ -141,7 +133,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
         String moduleTracePattern = configInfo.getModuleTracePattern();
         if (Objects.isNull(moduleTracePattern) || moduleTracePattern.isEmpty()){
             logger.info("未指定项目所用类通配符，使用默认通配符");
-            return "^cn\\.newgrand\\.pm\\.pcm\\.contract.*";
+            return "^cn\\.newgrand.*";
         }
         logger.info("项目所用类通配符:{}",moduleTracePattern);
         return moduleTracePattern;
