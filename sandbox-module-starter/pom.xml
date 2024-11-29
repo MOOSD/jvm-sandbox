@@ -69,6 +69,12 @@
             <artifactId>metainf-services</artifactId>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>cn.newgrand.ck</groupId>
+            <artifactId>dynamic-api</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+
     </dependencies>
 
     <dependencyManagement>
