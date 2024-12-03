@@ -16,6 +16,10 @@ public class MethodTree {
     // 根节点
     private final MethodNode root;
 
+    private Integer sort = 0;
+
+    private Integer sendSum = 0;
+
     public Boolean getSend() {
         return send;
     }
@@ -24,13 +28,14 @@ public class MethodTree {
         this.send = send;
     }
 
-    private Boolean send = true;
+    private Boolean send = false;
 
     // 当前节点
     private MethodNode current;
 
     public MethodTree(MethodInfo title) {
-        this.root = new MethodNode(title).markBegin();
+        this.sort = 0;
+        this.root = new MethodNode(title , this.sort).markBegin();
         this.current = root;
     }
 
@@ -67,7 +72,7 @@ public class MethodTree {
     public MethodTree begin(MethodInfo data) {
 //        current = new MethodTree.MethodNode(current, data);
 //        current.markBegin();
-        current = new MethodNode(current, data);
+        current = new MethodNode(current, data, this.sort++);
         current.markBegin();
 
         return this;
@@ -82,6 +87,13 @@ public class MethodTree {
 //            throw new IllegalStateException("current node is root.");
 //        }
         return current.data;
+    }
+
+    public void setBegin(Boolean isBegin){
+        current.setBegin(isBegin);
+    }
+    public Boolean getBegin(){
+        return current.isBegin();
     }
 
     public MethodTree set(MethodInfo data) {
@@ -118,6 +130,22 @@ public class MethodTree {
 
     public MethodNode getCurrent() {
         return current;
+    }
+
+    public Integer getSort() {
+        return sort;
+    }
+
+    public void setSort(Integer sort) {
+        this.sort = sort;
+    }
+
+    public Integer getSendSum() {
+        return sendSum;
+    }
+
+    public void setSendSum(Integer sendSum) {
+        this.sendSum = sendSum;
     }
 
     private interface Callback {
@@ -202,6 +230,10 @@ public class MethodTree {
          */
         MethodInfo data;
 
+        private final int sort;
+
+        private boolean begin = false;
+
         /**
          * 子节点
          */
@@ -219,16 +251,18 @@ public class MethodTree {
 
         private final int depth;
 
-        private MethodNode(MethodNode parent, MethodInfo data) {
+        private MethodNode(MethodNode parent, MethodInfo data , Integer sort) {
             this.parent = parent;
             this.data = data;
+            this.sort = sort;
             this.depth = (parent == null) ? 0 : parent.depth + 1;
             if (parent != null) {
                 parent.children.add(this);
             }
         }
 
-        private MethodNode(MethodInfo data) {
+        private MethodNode(MethodInfo data, int sort) {
+            this.sort = sort;
             this.parent = null;
             this.data = data;
             this.depth = 0;
@@ -262,6 +296,13 @@ public class MethodTree {
             return this;
         }
 
+        public boolean isBegin() {
+            return begin;
+        }
+
+        public void setBegin(boolean begin) {
+            this.begin = begin;
+        }
     }
 
 }
