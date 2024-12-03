@@ -8,13 +8,12 @@ import com.alibaba.jvm.sandbox.api.tools.ConcurrentHashSet;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sandbox.module.node.MethodTree;
-import com.sandbox.module.node.MethodTreeDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class CoverageDataConsumer implements DataConsumer<MethodTree> {
+public class TraceDataConsumer implements DataConsumer<MethodTree> {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -24,7 +23,7 @@ public class CoverageDataConsumer implements DataConsumer<MethodTree> {
 
     private final ReentrantReadWriteLock.WriteLock writeLock;
 
-    public CoverageDataConsumer(ConfigInfo configInfo, DataReporter dataReporter, AgentInfo agentInfo) {
+    public TraceDataConsumer(ConfigInfo configInfo, DataReporter dataReporter, AgentInfo agentInfo) {
         this.dataReporter = dataReporter;
         ReentrantReadWriteLock reentrantReadWriteLock = new ReentrantReadWriteLock();
         this.writeLock = reentrantReadWriteLock.writeLock();

@@ -12,13 +12,10 @@ import com.alibaba.jvm.sandbox.api.listener.ext.EventWatchBuilder;
 import com.alibaba.jvm.sandbox.api.resource.AgentInfo;
 import com.alibaba.jvm.sandbox.api.resource.ConfigInfo;
 import com.alibaba.jvm.sandbox.api.resource.ModuleEventWatcher;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sandbox.module.Context.RequestContext;
 import com.sandbox.module.node.MethodInfo;
 import com.sandbox.module.node.MethodTree;
-import com.sandbox.module.processor.CoverageDataConsumer;
+import com.sandbox.module.processor.TraceDataConsumer;
 import org.kohsuke.MetaInfServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -146,7 +143,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
         // 创建数据发送器
         DataReporter dataReporter = new LogDataReporter(configInfo);
         // 创建消费者
-        CoverageDataConsumer coverageDataConsumer = new CoverageDataConsumer(configInfo, dataReporter, agentInfo);
+        TraceDataConsumer coverageDataConsumer = new TraceDataConsumer(configInfo, dataReporter, agentInfo);
         annotationSet.addAll(Arrays.asList(defaultAnnotation));
         // 创建数据消费者
         this.dataProcessor = new DataProcessor<>(3, 100, coverageDataConsumer);
