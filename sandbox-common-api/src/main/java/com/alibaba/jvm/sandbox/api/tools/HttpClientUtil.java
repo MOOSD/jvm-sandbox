@@ -4,6 +4,7 @@ package com.alibaba.jvm.sandbox.api.tools;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.http.HttpHost;
 import org.apache.http.NoHttpResponseException;
+import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -128,9 +129,13 @@ public class HttpClientUtil {
         // 构造请求体
         String jsonString = JSON.toJSONString(requestBody);
         httpPost.setEntity(new StringEntity(jsonString, ContentType.APPLICATION_JSON));
-
         StringBuilder responseBodyStr = new StringBuilder();
         try(CloseableHttpResponse response = httpClient.execute(httpPost)){
+            // 如果响应非200，则抛出异常
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (200 != statusCode) {
+                throw new RuntimeException("请求异常"+ uri + " : " +statusCode);
+            }
             // 无响应体直接返回
             if (response.getEntity() == null) {
                 log.info("无响应体：{}", uri);

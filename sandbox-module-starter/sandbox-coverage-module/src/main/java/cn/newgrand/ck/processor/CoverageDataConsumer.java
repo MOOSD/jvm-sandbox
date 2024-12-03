@@ -1,15 +1,23 @@
 package cn.newgrand.ck.processor;
 
+import cn.newgrand.ck.constant.ApiPathConstant;
+import cn.newgrand.ck.entity.request.CoverageDateReportRequest;
 import cn.newgrand.ck.executor.DataConsumer;
 import cn.newgrand.ck.pojo.ClassCoverage;
 import cn.newgrand.ck.reporter.DataReporter;
 import cn.newgrand.ck.pojo.MethodCoverage;
+import cn.newgrand.ck.reporter.HttpDataReporter;
+import cn.newgrand.ck.reporter.LogDataReporter;
 import com.alibaba.jvm.sandbox.api.resource.AgentInfo;
 import com.alibaba.jvm.sandbox.api.tools.ConcurrentHashSet;
 import com.alibaba.jvm.sandbox.api.resource.ConfigInfo;
+import com.alibaba.jvm.sandbox.api.tools.HkUtils;
+import com.alibaba.jvm.sandbox.api.tools.HttpClientUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -68,7 +76,16 @@ public class CoverageDataConsumer implements DataConsumer<MethodCoverage> {
         try {
             writeLock.lock();
             if (sendClassCoverage.size() > 3) {
-                dataReporter.report(sendClassCoverage);
+                CoverageDateReportRequest coverageDateReportRequest = new CoverageDateReportRequest();
+                // 组装信息
+                coverageDateReportRequest.setInstanceId(agentInfo.getInstanceId());
+                // 发送信息
+                HashMap<String, Set<Integer>> classCoverage = new HashMap<>();
+                for (ClassCoverage coverage : sendClassCoverage) {
+                    classCoverage.put(coverage.getClassName(), coverage.getCoverageLineSet());
+                }
+                coverageDateReportRequest.setClassCoverageMap(classCoverage);
+                dataReporter.report(coverageDateReportRequest);
                 sendClassCoverage.clear();
             }
         } finally {
@@ -77,13 +94,19 @@ public class CoverageDataConsumer implements DataConsumer<MethodCoverage> {
 
     }
 
-    public CoverageDataConsumer(ConfigInfo configInfo, DataReporter dataReporter, AgentInfo agentInfo) {
+    public CoverageDataConsumer(ConfigInfo configInfo, AgentInfo agentInfo) {
         this.configInfo = configInfo;
         this.agentInfo = agentInfo;
-        this.dataReporter = dataReporter;
         ReentrantReadWriteLock reentrantReadWriteLock = new ReentrantReadWriteLock();
         this.readLock = reentrantReadWriteLock.readLock();
         this.writeLock = reentrantReadWriteLock.writeLock();
+
+        String coverageUrl = HkUtils.getUrl(configInfo.getHkServerIp(), configInfo.getHkServerPort(),
+                ApiPathConstant.COVERAGE_REPORT_URL);
+
+        // 创建数据发送器
+        this.dataReporter = new LogDataReporter(configInfo);
+
     }
 
 }

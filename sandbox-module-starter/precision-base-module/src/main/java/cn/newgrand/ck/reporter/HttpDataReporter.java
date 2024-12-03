@@ -7,44 +7,29 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.function.Consumer;
 
 public class HttpDataReporter extends DataReporter {
-
-    private final ConfigInfo configInfo;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final String url;
 
-    public HttpDataReporter(ConfigInfo configInfo, String url) {
-        this.configInfo = configInfo;
+    public HttpDataReporter(String url) {
         this.url = url;
     }
 
     @Override
     public ReportResult report(Object data){
-        try(CloseableHttpResponse closeableHttpResponse = reportByPost(data)){
-            if (200 == closeableHttpResponse.getStatusLine().getStatusCode()){
-                return new ReportResult(true);
-            }else{
-                return new ReportResult(false);
-            }
+
+        try{
+            HttpClientUtil.postByJson(url,data);
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            logger.info("数据上报异常",e);
         }
+        return null;
     }
-
-    private CloseableHttpResponse reportByPost(Object data) throws IOException {
-
-            HttpPost httpPost = new HttpPost(url);
-            // 设置请求头
-            httpPost.setHeader("Content-Type","application/json;charset=UTF-8");
-            // 构造请求体
-            StringEntity stringEntity = new StringEntity(JSON.toJSONString(data));
-            httpPost.setEntity(stringEntity);
-            return HttpClientUtil.httpClient.execute(httpPost);
-
-    }
-
 }

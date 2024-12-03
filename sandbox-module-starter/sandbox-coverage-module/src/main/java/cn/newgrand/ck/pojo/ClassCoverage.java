@@ -29,6 +29,10 @@ public class ClassCoverage {
         ClassName = className;
     }
 
+    public ConcurrentHashSet<Integer> getCoverageLineSet() {
+        return coverageLineSet;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

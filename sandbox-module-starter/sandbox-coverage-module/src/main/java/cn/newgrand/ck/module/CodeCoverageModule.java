@@ -111,10 +111,9 @@ public class CodeCoverageModule implements Module, LoadCompleted {
 
     private void initModule(){
         log.info("覆盖率模块加载开始");
-        // 创建数据发送器
-        DataReporter dataReporter = new LogDataReporter(configInfo);
+
         // 创建消费者
-        CoverageDataConsumer coverageDataConsumer = new CoverageDataConsumer(configInfo,dataReporter,agentInfo);
+        CoverageDataConsumer coverageDataConsumer = new CoverageDataConsumer(configInfo, agentInfo);
 
         // 创建数据消费者
         this.dataProcessor = new DataProcessor<>(2,10240, coverageDataConsumer);
