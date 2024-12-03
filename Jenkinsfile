@@ -21,6 +21,55 @@ pipeline {
                 sh ' mvn -B -U -DskipTests clean package '
             }
         }
+        stage('jar issue') {
+                    steps {
+                        dir("./precision-static") {
+                            sh 'echo "当前工作目录:$(pwd)"'
+                            sshPublisher(
+                            publishers: [
+                                sshPublisherDesc(
+                                    configName: 'bugkiller-dev(172)',
+                                    transfers: [
+                                        sshTransfer(
+                                            cleanRemote: false,
+                                            excludes: '',
+                                            execCommand: '''
+                                                # 移动文件
+                                                echo "文件移动成功"
+
+                                                # 切换到文件所在目录
+                                                cd /var/release/agent
+
+                                                # 查找最新的 JAR 文件（按时间排序或按版本号排序）
+                                                LATEST_JAR=$(ls -t *.jar | head -n 1)
+
+                                                # 创建符号链接，指向最新的 JAR 文件
+                                                ln -sf $LATEST_JAR hawkeye-agent-latest.jar
+
+                                                # 验证符号链接
+                                                ls -l hawkeye-agent-latest.jar
+                                            ''',
+                                            execTimeout: 120000,
+                                            flatten: false,
+                                            makeEmptyDirs: false,
+                                            noDefaultExcludes: false,
+                                            patternSeparator: '[, ]+',
+                                            remoteDirectory: '/var/release/agent/',
+                                            remoteDirectorySDF: true,
+                                            removePrefix: 'target',
+                                            sourceFiles: 'target/*.jar'  // 允许上传任意 JAR 文件
+                                        )
+                                    ],
+                                    usePromotionTimestamp: false,
+                                    useWorkspaceInPromotion: false,
+                                    verbose: true
+                                )
+                                ]
+                            )
+                        }
+                    }
+        }
+
         stage('docker build') {
             steps {
                 dir("./build") {
