@@ -23,7 +23,7 @@ pipeline {
         }
         stage('jar issue') {
                     steps {
-                        dir("./precision-static") {
+                        dir("./build") {
                             sh 'echo "当前工作目录:$(pwd)"'
                             sshPublisher(
                             publishers: [
@@ -56,8 +56,8 @@ pipeline {
                                             patternSeparator: '[, ]+',
                                             remoteDirectory: '/var/release/agent/',
                                             remoteDirectorySDF: true,
-                                            removePrefix: '../build/target',
-                                            sourceFiles: '../build/target/*.jar'  // 允许上传任意 JAR 文件
+                                            removePrefix: './target',
+                                            sourceFiles: './target/*.jar'  // 允许上传任意 JAR 文件
                                         )
                                     ],
                                     usePromotionTimestamp: false,
