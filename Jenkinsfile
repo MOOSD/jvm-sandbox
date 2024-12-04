@@ -56,8 +56,8 @@ pipeline {
                                             patternSeparator: '[, ]+',
                                             remoteDirectory: '/var/release/agent/',
                                             remoteDirectorySDF: true,
-                                            removePrefix: './target',
-                                            sourceFiles: './target/*.jar'  // 允许上传任意 JAR 文件
+                                            removePrefix: 'target',
+                                            sourceFiles: 'target/*.jar'  // 允许上传任意 JAR 文件
                                         )
                                     ],
                                     usePromotionTimestamp: false,
