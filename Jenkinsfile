@@ -22,10 +22,10 @@ pipeline {
             }
         }
         stage('jar issue') {
-                    steps {
-                        dir("./build") {
-                            sh 'echo "当前工作目录:$(pwd)"'
-                            sshPublisher(
+             steps {
+                  dir("./build") {
+                       sh 'echo "当前工作目录:$(pwd)"'
+                       sshPublisher(
                             publishers: [
                                 sshPublisherDesc(
                                     configName: 'bugkiller-dev(172)',
@@ -36,16 +36,12 @@ pipeline {
                                             execCommand: '''
                                                 # 移动文件
                                                 echo "文件移动成功"
-
                                                 # 切换到文件所在目录
                                                 cd /var/release/agent
-
                                                 # 查找最新的 JAR 文件（按时间排序或按版本号排序）
-                                                LATEST_JAR=$(ls -t *.jar | head -n 1)
-
+                                                LATEST_JAR=$(ls -t *.jar | grep -v 'hawkeye-agent-latest.jar' | head -n 1)
                                                 # 创建符号链接，指向最新的 JAR 文件
                                                 ln -sf $LATEST_JAR hawkeye-agent-latest.jar
-
                                                 # 验证符号链接
                                                 ls -l hawkeye-agent-latest.jar
                                             ''',
@@ -64,10 +60,10 @@ pipeline {
                                     useWorkspaceInPromotion: false,
                                     verbose: true
                                 )
-                                ]
-                            )
-                        }
-                    }
+                            ]
+                       )
+                  }
+             }
         }
 
         stage('docker build') {
