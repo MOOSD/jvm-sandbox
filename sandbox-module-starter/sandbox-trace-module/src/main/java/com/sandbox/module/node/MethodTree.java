@@ -164,6 +164,7 @@ public class MethodTree {
         dto.setMethodInfo(node.data);
         dto.setBeginTimestamp(node.beginTimestamp);
         dto.setEndTimestamp(node.endTimestamp);
+        dto.setSort(node.sort);
 
         // 使用迭代法代替递归法（适用于大树结构）
         Deque<MethodNode> stack = new ArrayDeque<>();

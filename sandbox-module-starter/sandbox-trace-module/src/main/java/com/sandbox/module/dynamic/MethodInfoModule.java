@@ -146,7 +146,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
         TraceDataConsumer coverageDataConsumer = new TraceDataConsumer(configInfo, dataReporter, agentInfo);
         annotationSet.addAll(Arrays.asList(defaultAnnotation));
         // 创建数据消费者
-        this.dataProcessor = new DataProcessor<>(3, 100, coverageDataConsumer);
+        this.dataProcessor = new DataProcessor<>(5, 1000, coverageDataConsumer);
     }
 
 

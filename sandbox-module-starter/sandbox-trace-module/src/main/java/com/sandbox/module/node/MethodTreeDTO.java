@@ -16,6 +16,7 @@ public class MethodTreeDTO {
     }
 
     private Integer depth;
+    private Integer sort;
     private long beginTimestamp;
     private long endTimestamp;
     private List<MethodTreeDTO> children = new ArrayList<>();
@@ -50,5 +51,13 @@ public class MethodTreeDTO {
 
     public void setChildren(List<MethodTreeDTO> children) {
         this.children = children;
+    }
+
+    public Integer getSort() {
+        return sort;
+    }
+
+    public void setSort(Integer sort) {
+        this.sort = sort;
     }
 }
