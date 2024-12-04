@@ -36,7 +36,7 @@ public class TraceDataConsumer implements DataConsumer<MethodTree> {
         try{
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-            String json = objectMapper.writeValueAsString(data.convertToDTO(data.getRoot()));
+            String json = objectMapper.writeValueAsString(data.convertToDTO(data.getCurrent()));
             sendClassCoverage.add(json);
         }catch (Exception e){
             logger.error("链路数据消费异常",e);
