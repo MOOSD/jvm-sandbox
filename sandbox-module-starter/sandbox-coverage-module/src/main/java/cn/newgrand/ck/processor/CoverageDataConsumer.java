@@ -95,6 +95,7 @@ public class CoverageDataConsumer implements DataConsumer<MethodCoverage> {
     }
 
     public CoverageDataConsumer(ConfigInfo configInfo, AgentInfo agentInfo) {
+        System.out.println(System.getProperties());
         this.configInfo = configInfo;
         this.agentInfo = agentInfo;
         ReentrantReadWriteLock reentrantReadWriteLock = new ReentrantReadWriteLock();

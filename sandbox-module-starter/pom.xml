@@ -19,6 +19,7 @@
         <module>sandbox-mgr-module</module>
         <module>sandbox-trace-module</module>
         <module>sandbox-coverage-module</module>
+        <module>sandbox-exception-module</module>
     </modules>
 
     <build>
