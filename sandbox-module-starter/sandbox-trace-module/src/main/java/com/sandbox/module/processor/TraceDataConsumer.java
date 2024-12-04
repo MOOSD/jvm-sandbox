@@ -48,7 +48,7 @@ public class TraceDataConsumer implements DataConsumer<MethodTree> {
     private void tryReport(){
         try {
             writeLock.lock();
-            if (sendClassCoverage.size() > 2) {
+            if (sendClassCoverage.size() > 5) {
                 dataReporter.report(sendClassCoverage);
                 sendClassCoverage.clear();
             }
