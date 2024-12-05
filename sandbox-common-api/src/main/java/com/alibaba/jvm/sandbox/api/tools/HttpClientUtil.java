@@ -123,11 +123,16 @@ public class HttpClientUtil {
         return JSON.parseObject(responseJson, responseType);
     }
 
+    /**
+     * @param requestBody 请求体如果是字符串，则不做序列化，请求体如果不是字符串，则序列化后发送
+     */
     private static String postByJsonStr(String uri, Object requestBody) throws IOException{
         HttpPost httpPost = new HttpPost(uri);
         httpPost.setHeader("Content-Type", "application/json");
         // 构造请求体
-        String jsonString = JSON.toJSONString(requestBody);
+
+        String jsonString = requestBody instanceof String ? (String) requestBody :JSON.toJSONString(requestBody);
+
         httpPost.setEntity(new StringEntity(jsonString, ContentType.APPLICATION_JSON));
         StringBuilder responseBodyStr = new StringBuilder();
         try(CloseableHttpResponse response = httpClient.execute(httpPost)){

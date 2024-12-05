@@ -2,6 +2,10 @@ package cn.newgrand.ck.pojo;
 
 import com.alibaba.jvm.sandbox.api.tools.ConcurrentHashSet;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * 方法的覆盖率信息
  */
@@ -11,14 +15,18 @@ public class ClassCoverage {
     /**
      * 使用hashSet去重
      */
-    private final ConcurrentHashSet<Integer> coverageLineSet = new ConcurrentHashSet<>();
+    private final ConcurrentHashMap<Integer, AtomicInteger> coverageLineMap = new ConcurrentHashMap<>();
 
     public ClassCoverage(String className) {
         ClassName = className;
     }
 
-    public boolean recordCoverage(int line){
-        return coverageLineSet.add(line);
+    /**
+     * 记录覆盖率
+     */
+    public void recordCoverage(int line){
+        AtomicInteger counter = coverageLineMap.computeIfAbsent(line, key -> new AtomicInteger(0));
+        counter.incrementAndGet();
     }
 
     public String getClassName() {
@@ -29,8 +37,8 @@ public class ClassCoverage {
         ClassName = className;
     }
 
-    public ConcurrentHashSet<Integer> getCoverageLineSet() {
-        return coverageLineSet;
+    public Map<Integer, AtomicInteger> getCoverageLineMap() {
+        return coverageLineMap;
     }
 
     @Override

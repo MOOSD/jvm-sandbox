@@ -96,6 +96,8 @@ public class DataProcessor<T> {
         });
         featureList.clear();
         isEnable = false;
+        // 通知消费者消费停止
+        dataConsumer.stop();
 
     }
 

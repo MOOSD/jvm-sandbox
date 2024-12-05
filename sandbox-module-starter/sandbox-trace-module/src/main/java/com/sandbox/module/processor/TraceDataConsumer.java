@@ -53,6 +53,10 @@ public class TraceDataConsumer implements DataConsumer<MethodTree> {
         }
 
     }
+    @Override
+    public void stop() {
+
+    }
 
     private void tryReport(String json){
         logger.info("json:{}",json);

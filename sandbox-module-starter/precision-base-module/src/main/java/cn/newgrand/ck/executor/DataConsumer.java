@@ -6,7 +6,7 @@ import java.util.UUID;
  * 数据消费者
  * @param <T> 要消费的数据类型
  */
-@FunctionalInterface
+
 public interface DataConsumer<T> {
 
 //    /**
@@ -20,4 +20,5 @@ public interface DataConsumer<T> {
     void consume(T data);
 
 
+    void stop();
 }

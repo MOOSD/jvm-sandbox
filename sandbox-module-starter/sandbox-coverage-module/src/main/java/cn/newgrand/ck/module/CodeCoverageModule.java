@@ -3,19 +3,17 @@ package cn.newgrand.ck.module;
 
 import cn.newgrand.ck.executor.DataProcessor;
 import cn.newgrand.ck.pojo.MethodCoverage;
-import cn.newgrand.ck.processor.CoverageDataConsumer;
-import cn.newgrand.ck.reporter.DataReporter;
-import cn.newgrand.ck.reporter.LogDataReporter;
+import cn.newgrand.ck.consumer.CoverageDataConsumer;
 import com.alibaba.jvm.sandbox.api.Information;
 import com.alibaba.jvm.sandbox.api.LoadCompleted;
 import com.alibaba.jvm.sandbox.api.Module;
+import com.alibaba.jvm.sandbox.api.ModuleLifecycle;
 import com.alibaba.jvm.sandbox.api.listener.ext.Advice;
 import com.alibaba.jvm.sandbox.api.listener.ext.AdviceListener;
 import com.alibaba.jvm.sandbox.api.listener.ext.EventWatchBuilder;
 import com.alibaba.jvm.sandbox.api.resource.AgentInfo;
 import com.alibaba.jvm.sandbox.api.resource.ConfigInfo;
 import com.alibaba.jvm.sandbox.api.resource.ModuleEventWatcher;
-import org.apache.commons.codec.binary.StringUtils;
 import org.kohsuke.MetaInfServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +23,7 @@ import java.util.Objects;
 
 @MetaInfServices(Module.class)
 @Information(id = "code-coverage", version = "0.0.1")
-public class CodeCoverageModule implements Module, LoadCompleted {
+public class CodeCoverageModule implements Module, LoadCompleted, ModuleLifecycle {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
     @Resource
     private ModuleEventWatcher moduleEventWatcher;
@@ -119,4 +117,24 @@ public class CodeCoverageModule implements Module, LoadCompleted {
         this.dataProcessor = new DataProcessor<>(2,10240, coverageDataConsumer);
     }
 
+    @Override
+    public void onLoad() throws Throwable {
+
+    }
+
+    @Override
+    public void onUnload() throws Throwable {
+        log.warn("模块卸载");
+        dataProcessor.disable();
+    }
+
+    @Override
+    public void onActive() throws Throwable {
+
+    }
+
+    @Override
+    public void onFrozen() throws Throwable {
+
+    }
 }
