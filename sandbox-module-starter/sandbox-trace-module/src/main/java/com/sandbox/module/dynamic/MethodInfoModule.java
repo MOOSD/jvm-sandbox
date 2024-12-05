@@ -100,11 +100,11 @@ public class MethodInfoModule implements Module, LoadCompleted {
                             }
                             methodInfo.setSend(isSend);
                             methodInfo.setAnnotations(annotationNames);
-                        }
-                        if(advice.getParameterArray() != null && advice.getParameterArray().length > 0){
-                            methodInfo.setParams(Arrays.stream(advice.getParameterArray())
-                                    .map(String::valueOf)  // 将每个元素转为 String
-                                    .toArray(String[]::new));
+                            if(advice.getParameterArray() != null && advice.getParameterArray().length > 0){
+                                methodInfo.setParams(Arrays.stream(advice.getParameterArray())
+                                        .map(String::valueOf)  // 将每个元素转为 String
+                                        .toArray(String[]::new));
+                            }
                         }
                         return methodInfo;
                     }
@@ -113,11 +113,6 @@ public class MethodInfoModule implements Module, LoadCompleted {
                     protected void afterReturning(Advice advice) throws Throwable {
                         if(Objects.nonNull(TraceIdModule.getRequestTtl())){
                             final MethodTree methodTree = advice.getProcessTop().attachment();
-                            if(Objects.nonNull(advice.getReturnObj())){
-                                MethodInfo methodInfo = new MethodInfo();
-                                methodInfo.setData(advice.getReturnObj().toString());
-                                methodTree.addBaseInfo(methodInfo);
-                            }
                             if(methodTree.getBegin() && methodTree.getCurrentData().getSend()){
                                 methodTree.setSend(false);
                                 dataProcessor.add(advice.getProcessTop().attachment());
