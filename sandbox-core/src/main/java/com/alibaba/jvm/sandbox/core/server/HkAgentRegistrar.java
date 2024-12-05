@@ -204,6 +204,8 @@ public class HkAgentRegistrar {
         RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
         // 获取 JVM 启动参数
         jvmInfo.setJvmArguments(runtimeMXBean.getInputArguments());
+        // 设置JVM的启动时间
+        jvmInfo.setJvmStartTime(runtimeMXBean.getStartTime());
         return jvmInfo;
     }
 
