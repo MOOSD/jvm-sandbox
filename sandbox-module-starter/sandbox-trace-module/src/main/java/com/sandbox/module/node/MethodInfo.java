@@ -1,12 +1,14 @@
 package com.sandbox.module.node;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 public class MethodInfo {
 
     private String className;
     private String methodName;
     private String[] annotations;
+    private Integer sort;
 
     private String log;
 
@@ -15,11 +17,6 @@ public class MethodInfo {
     private String data;
 
     private String[] params;
-
-
-    private String traceId;
-
-    private String spanId;
 
     public String getClassName() {
         return className;
@@ -53,31 +50,16 @@ public class MethodInfo {
         this.data = data;
     }
 
-    public String getTraceId() {
-        return traceId;
-    }
-
-    public void                                                                                                                                                                                                                                         setTraceId(String traceId) {
-        this.traceId = traceId;
-    }
-
-    public String getSpanId() {
-        return spanId;
-    }
-
-    public void setSpanId(String spanId) {
-        this.spanId = spanId;
-    }
 
     @Override
     public String toString() {
         return "MethodInfo{" +
                 "className='" + className + '\'' +
                 ", methodName='" + methodName + '\'' +
+                ", sort=" + sort + '\'' +
                 ", log='" + log + '\'' +
                 ", data='" + data + '\'' +
-                ", traceId='" + traceId + '\'' +
-                ", spanId='" + spanId + '\'' +
+                ", params='" + Arrays.toString(params) + '\'' +
                 ", annotation=" + Arrays.toString(annotations) +
                 '}';
     }
@@ -104,5 +86,29 @@ public class MethodInfo {
 
     public void setSend(Boolean send) {
         isSend = send;
+    }
+
+    /**
+     * 复制log和data属性
+     * @param methodInfo
+     */
+    public void mergeInfo(MethodInfo methodInfo){
+        if(methodInfo == null){
+            return;
+        }
+        if(Objects.nonNull(methodInfo.getLog())){
+            this.setLog(methodInfo.getLog());
+        }
+        if(Objects.nonNull(methodInfo.getData())){
+            this.setData(methodInfo.getData());
+        }
+    }
+
+    public Integer getSort() {
+        return sort;
+    }
+
+    public void setSort(Integer sort) {
+        this.sort = sort;
     }
 }

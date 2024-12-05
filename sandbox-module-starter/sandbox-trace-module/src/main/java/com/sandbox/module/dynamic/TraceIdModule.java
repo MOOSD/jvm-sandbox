@@ -30,7 +30,6 @@ public class TraceIdModule implements Module, LoadCompleted {
 
      final static TransmittableThreadLocal<String> traceIdThreadLocal = new TransmittableThreadLocal<>();
     final static TransmittableThreadLocal<RequestContext> requestTtl = new TransmittableThreadLocal<>();
-
     public static String getThreadLocalValue(){
         return traceIdThreadLocal.get();
     }
@@ -72,12 +71,13 @@ public class TraceIdModule implements Module, LoadCompleted {
 
 
                         Object userAgent = get.invoke(headers, "User-Agent");
+                        String requestUrl = (String) Objects.requireNonNull(getMethod(serverHttpRequest, "getURI")).invoke(serverHttpRequest);
 
                         // 如果 taceId 不存在则生成唯一 traceId 并且将其放入到请求头中
                         if(Objects.isNull(headerList)){
                             String uuid = UUID.randomUUID().toString();
 
-                            RequestContext requestContext = new RequestContext(uuid, null, "(String) agent");
+                            RequestContext requestContext = new RequestContext(uuid, null, "(String) agent" , requestUrl);
                             traceIdThreadLocal.set(uuid);
                             requestTtl.set(requestContext);
 
@@ -133,21 +133,22 @@ public class TraceIdModule implements Module, LoadCompleted {
                         Object headerTraceId = getHeader(requestObj, LinkConstant.TRACE_ID);
                         Object headerTraceIdByStr = getHeader(requestObj, "traceId");
                         Object headerSpanId = getHeader(requestObj, LinkConstant.SPAN_ID);
+                        String requestURI = (String) Objects.requireNonNull(getMethod(requestObj, "getRequestURI")).invoke(requestObj);
 
 
                         if(headerTraceId != null){
                             traceIdThreadLocal.set((String) headerTraceId);
-                            RequestContext requestContext = new RequestContext((String) headerTraceId, (String) headerSpanId, (String) getHeader(requestObj, "User-Agent"));
+                            RequestContext requestContext = new RequestContext((String) headerTraceId, (String) headerSpanId, (String) getHeader(requestObj, "User-Agent"),requestURI);
                             requestTtl.set(requestContext);
                             setAttribute(requestObj, LinkConstant.TRACE_ID, getThreadLocalValue());
                         }
 
                         if(traceIdThreadLocal.get() == null){
                             String uuid = UUID.randomUUID().toString();
-                            RequestContext requestContext = new RequestContext(uuid, null, (String) getHeader(requestObj, "User-Agent"));
+                            RequestContext requestContext = new RequestContext(uuid, null, (String) getHeader(requestObj, "User-Agent"),requestURI);
                             traceIdThreadLocal.set(uuid);
                             requestTtl.set(requestContext);
-                            String requestURI = (String) getMethod(requestObj, "getRequestURI").invoke(requestObj);
+
                             logger.info("Injected traceId: {} into request: {}", uuid, requestURI);
                         }
 

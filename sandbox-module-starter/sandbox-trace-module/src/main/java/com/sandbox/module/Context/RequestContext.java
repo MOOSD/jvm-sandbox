@@ -7,8 +7,11 @@ public class RequestContext {
     private String spanId;
     private String message;
 
-    public RequestContext(String traceId, String spanId, String message) {
+    private String requestUrl;
+
+    public RequestContext(String traceId, String spanId, String message, String requestUrl) {
         this.traceId = traceId;
+        this.requestUrl = requestUrl;
         if(spanId != null){
             this.spanId = spanId + ".0";
         } else {
@@ -48,5 +51,13 @@ public class RequestContext {
                 ", spanId='" + spanId + '\'' +
                 ", message='" + message + '\'' +
                 '}';
+    }
+
+    public String getRequestUrl() {
+        return requestUrl;
+    }
+
+    public void setRequestUrl(String requestUrl) {
+        this.requestUrl = requestUrl;
     }
 }

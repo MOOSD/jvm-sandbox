@@ -7,10 +7,14 @@ import com.alibaba.jvm.sandbox.api.resource.ConfigInfo;
 import com.alibaba.jvm.sandbox.api.tools.ConcurrentHashSet;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sandbox.module.node.MethodInfo;
 import com.sandbox.module.node.MethodTree;
+import com.sandbox.module.node.TraceBaseInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class TraceDataConsumer implements DataConsumer<MethodTree> {
@@ -19,14 +23,14 @@ public class TraceDataConsumer implements DataConsumer<MethodTree> {
 
     private final DataReporter dataReporter;
 
-    private final ConcurrentHashSet<String> sendClassCoverage = new ConcurrentHashSet<>();
 
     private final ReentrantReadWriteLock.WriteLock writeLock;
-
+    ObjectMapper objectMapper = new ObjectMapper();
     public TraceDataConsumer(ConfigInfo configInfo, DataReporter dataReporter, AgentInfo agentInfo) {
         this.dataReporter = dataReporter;
         ReentrantReadWriteLock reentrantReadWriteLock = new ReentrantReadWriteLock();
         this.writeLock = reentrantReadWriteLock.writeLock();
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
     @Override
@@ -34,27 +38,23 @@ public class TraceDataConsumer implements DataConsumer<MethodTree> {
         logger.info("链路数据消费");
         // 获取类覆盖率
         try{
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-            String json = objectMapper.writeValueAsString(data.convertToDTO(data.getCurrent()));
-            sendClassCoverage.add(json);
+            TraceBaseInfo traceBaseInfo = new TraceBaseInfo();
+            traceBaseInfo.setTraceId(data.getTraceId());
+            traceBaseInfo.setSpanId(data.getSpanId());
+            traceBaseInfo.setRequestUrl(data.getRequestUri());
+            traceBaseInfo.setSort(data.getSort());
+            final MethodInfo[] methodInfoList = new MethodInfo[data.getSort()];
+            traceBaseInfo.setSimpleTree(data.convertToDTO(data.getCurrent(),methodInfoList , data.getBaseInfo()));
+            traceBaseInfo.setNodeDetail(methodInfoList);
+            String json = objectMapper.writeValueAsString(traceBaseInfo);
+            tryReport(json);
         }catch (Exception e){
             logger.error("链路数据消费异常",e);
         }
-        // 尝试发送数据
-        tryReport();
+
     }
 
-    private void tryReport(){
-        try {
-            writeLock.lock();
-            if (sendClassCoverage.size() > 5) {
-                dataReporter.report(sendClassCoverage);
-                sendClassCoverage.clear();
-            }
-        } finally {
-            writeLock.unlock();
-        }
-
+    private void tryReport(String json){
+        logger.info("json:{}",json);
     }
 }

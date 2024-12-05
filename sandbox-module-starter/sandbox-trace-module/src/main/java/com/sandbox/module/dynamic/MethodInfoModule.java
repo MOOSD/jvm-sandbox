@@ -59,17 +59,24 @@ public class MethodInfoModule implements Module, LoadCompleted {
 
                     @Override
                     protected void before(Advice advice) throws Throwable {
-                        final MethodTree methodTree;
-                        if (advice.isProcessTop()) {
-                            methodTree = new MethodTree(getMethodInfo(advice));
-                            advice.attach(methodTree);
-                        } else {
-                            methodTree = advice.getProcessTop().attachment();
-                            methodTree.begin(getMethodInfo(advice));
-                        }
-                        if(!methodTree.getSend() && Objects.nonNull(TraceIdModule.getRequestTtl())){
-                            methodTree.setBegin(true);
-                            methodTree.setSend(true);
+                        if(Objects.nonNull(TraceIdModule.getRequestTtl())){
+                            MethodInfo info = getMethodInfo(advice);
+                            final MethodTree methodTree;
+                            if (advice.isProcessTop()) {
+                                methodTree = new MethodTree(info);
+                                RequestContext reqTtl = TraceIdModule.getRequestTtl();
+                                methodTree.setTraceId(reqTtl.getTraceId());
+                                methodTree.setSpanId(reqTtl.getSpanId());
+                                methodTree.setRequestUri(reqTtl.getRequestUrl());
+                                advice.attach(methodTree);
+                            } else {
+                                methodTree = advice.getProcessTop().attachment();
+                                methodTree.begin(info);
+                            }
+                            if(!methodTree.getSend()){
+                                methodTree.setBegin(true);
+                                methodTree.setSend(true);
+                            }
                         }
                     }
 
@@ -77,49 +84,62 @@ public class MethodInfoModule implements Module, LoadCompleted {
                     public MethodInfo getMethodInfo(final Advice advice) {
                         MethodInfo methodInfo = new MethodInfo();
                         String methodName = advice.getBehavior().getName();
-                        String className = Objects.nonNull(advice.getTarget()) ? advice.getTarget().getClass().getName() : "null";
+                        String className = Objects.nonNull(advice.getTarget()) ? advice.getTarget().getClass().getName() : Objects.nonNull(advice.getBehavior()) ? advice.getBehavior().getDeclaringClass().getName() : null;
                         methodInfo.setClassName(className);
                         methodInfo.setMethodName(methodName);
-
-                        RequestContext requestTtl = TraceIdModule.getRequestTtl();
-                        if (Objects.nonNull(requestTtl)) {
                             //获取注解
-                            if ( advice.getBehavior() != null && advice.getBehavior().getAnnotations() != null && advice.getBehavior().getAnnotations().length > 0) {
-                                Annotation[] annotations = advice.getBehavior().getAnnotations();
-                                String[] annotationNames = new String[annotations.length];
-                                boolean isSend = false;
-                                for (int i = 0; i < annotations.length; i++) {
-                                    annotationNames[i] = annotations[i].annotationType().getSimpleName();
-                                    if(annotationSet.contains(annotationNames[i])){
-                                        isSend = true;
-                                    }
+                        if ( advice.getBehavior() != null && advice.getBehavior().getAnnotations() != null && advice.getBehavior().getAnnotations().length > 0) {
+                            Annotation[] annotations = advice.getBehavior().getAnnotations();
+                            String[] annotationNames = new String[annotations.length];
+                            boolean isSend = false;
+                            for (int i = 0; i < annotations.length; i++) {
+                                annotationNames[i] = annotations[i].annotationType().getSimpleName();
+                                if(annotationSet.contains(annotationNames[i])){
+                                    isSend = true;
                                 }
-                                methodInfo.setSend(isSend);
-                                methodInfo.setAnnotations(annotationNames);
                             }
-                            methodInfo.setTraceId(requestTtl.getTraceId());
-                            methodInfo.setSpanId(requestTtl.getSpanId());
+                            methodInfo.setSend(isSend);
+                            methodInfo.setAnnotations(annotationNames);
+                        }
+                        if(advice.getParameterArray() != null && advice.getParameterArray().length > 0){
+                            methodInfo.setParams(Arrays.stream(advice.getParameterArray())
+                                    .map(String::valueOf)  // 将每个元素转为 String
+                                    .toArray(String[]::new));
                         }
                         return methodInfo;
                     }
 
                     @Override
                     protected void afterReturning(Advice advice) throws Throwable {
-                        final MethodTree methodTree = advice.getProcessTop().attachment();
-                        methodTree.end();
-                        if(methodTree.getBegin()){
-                            methodTree.setSend(false);
-                            dataProcessor.add(advice.getProcessTop().attachment());
+                        if(Objects.nonNull(TraceIdModule.getRequestTtl())){
+                            final MethodTree methodTree = advice.getProcessTop().attachment();
+                            if(Objects.nonNull(advice.getReturnObj())){
+                                MethodInfo methodInfo = new MethodInfo();
+                                methodInfo.setData(advice.getReturnObj().toString());
+                                methodTree.addBaseInfo(methodInfo);
+                            }
+                            if(methodTree.getBegin() && methodTree.getCurrentData().getSend()){
+                                methodTree.setSend(false);
+                                dataProcessor.add(advice.getProcessTop().attachment());
+                            }
+                            methodTree.end();
                         }
                     }
 
                     @Override
                     protected void afterThrowing(Advice advice) throws Throwable {
-                        final MethodTree methodTree = advice.getProcessTop().attachment();
-                        methodTree.end();
-                        if(methodTree.getBegin()){
-                            methodTree.setSend(false);
-                            dataProcessor.add(advice.getProcessTop().attachment());
+                        if(Objects.nonNull(TraceIdModule.getRequestTtl())){
+                            final MethodTree methodTree = advice.getProcessTop().attachment();
+                            if(Objects.nonNull(advice.getThrowable())){
+                                MethodInfo methodInfo = new MethodInfo();
+                                methodInfo.setLog(advice.getThrowable().getMessage());
+                                methodTree.addBaseInfo(methodInfo);
+                            }
+                            if(methodTree.getBegin() && methodTree.getCurrentData().getSend()){
+                                methodTree.setSend(false);
+                                dataProcessor.add(advice.getProcessTop().attachment());
+                            }
+                            methodTree.end();
                         }
                     }
                 });

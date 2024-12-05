@@ -19,32 +19,33 @@ public class MethodTreeUtil {
 
     // 合并多个树（traceId 相同的所有链路的集合）
     public List<MethodTreeDTO> mergeMultipleTrees(List<MethodTreeDTO> trees) {
-        if (trees == null || trees.isEmpty()) {
-            return null;
-        }
-
-
-        // 获取链路树集合的spanId列表，由小到大排序
-        List<String> spanList = trees.stream()
-                .map(methodTreeDTO -> methodTreeDTO.getMethodInfo().getSpanId())
-                .distinct().sorted(Comparator.comparingInt(String::length)).collect(Collectors.toList());
-
-        // 由底端服务向上进行合并
-        for (int i = spanList.size() - 1; i > 0; i--) {
-            String spanA = spanList.get(i - 1);
-            String spanB = spanList.get(i);
-
-            List<MethodTreeDTO> methodTreeDTOsA = trees.stream().filter(methodTreeDTO -> methodTreeDTO.getMethodInfo().getSpanId().equals(spanA))
-                    .collect(Collectors.toList());
-            List<MethodTreeDTO> methodTreeDTOsB = trees.stream().filter(methodTreeDTO -> methodTreeDTO.getMethodInfo().getSpanId().equals(spanB))
-                    .collect(Collectors.toList());
-            mergeMethods(methodTreeDTOsA, methodTreeDTOsB);
-        }
-
-
-        String rootSpan = spanList.get(0);
-        return trees.stream().filter(methodTreeDTO -> methodTreeDTO.getMethodInfo().getSpanId().equals(rootSpan))
-                .collect(Collectors.toList());
+        return null;
+//        if (trees == null || trees.isEmpty()) {
+//            return null;
+//        }
+//
+//
+//        // 获取链路树集合的spanId列表，由小到大排序
+//        List<String> spanList = trees.stream()
+//                .map(methodTreeDTO -> methodTreeDTO.getSpanId())
+//                .distinct().sorted(Comparator.comparingInt(String::length)).collect(Collectors.toList());
+//
+//        // 由底端服务向上进行合并
+//        for (int i = spanList.size() - 1; i > 0; i--) {
+//            String spanA = spanList.get(i - 1);
+//            String spanB = spanList.get(i);
+//
+//            List<MethodTreeDTO> methodTreeDTOsA = trees.stream().filter(methodTreeDTO -> methodTreeDTO.getMethodInfo().getSpanId().equals(spanA))
+//                    .collect(Collectors.toList());
+//            List<MethodTreeDTO> methodTreeDTOsB = trees.stream().filter(methodTreeDTO -> methodTreeDTO.getMethodInfo().getSpanId().equals(spanB))
+//                    .collect(Collectors.toList());
+//            mergeMethods(methodTreeDTOsA, methodTreeDTOsB);
+//        }
+//
+//
+//        String rootSpan = spanList.get(0);
+//        return trees.stream().filter(methodTreeDTO -> methodTreeDTO.getMethodInfo().getSpanId().equals(rootSpan))
+//                .collect(Collectors.toList());
     }
 
 
@@ -53,7 +54,7 @@ public class MethodTreeUtil {
 
         for (MethodTreeDTO rootB : methodTreeDTOsB) {
             for (MethodTreeDTO rootA : methodTreeDTOsA) {
-                List<MethodTreeDTO> targetNodes = getNodeByMethodName(rootA, rootB.getMethodInfo().getMethodName());
+                List<MethodTreeDTO> targetNodes = getNodeByMethodName(rootA, rootB.getMethodName());
                 for (MethodTreeDTO targetNode : targetNodes) {
                     if(targetNode.getBeginTimestamp() <= rootB.getBeginTimestamp() &&
                             targetNode.getEndTimestamp() >= rootB.getEndTimestamp()){
@@ -74,7 +75,7 @@ public class MethodTreeUtil {
 
     // 递归查找叶子节点
     private void findByMethodName(MethodTreeDTO node, List<MethodTreeDTO> nodes, String methodName) {
-        if(node.getMethodInfo().getMethodName().equals(methodName)){
+        if(node.getMethodName().equals(methodName)){
             nodes.add(node);
             return;
         }

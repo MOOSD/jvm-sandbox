@@ -5,7 +5,10 @@ import java.util.List;
 
 public class MethodTreeDTO {
 
-    private MethodInfo methodInfo;
+
+    private String clizzName;
+
+    private String methodName;
 
     public Integer getDepth() {
         return depth;
@@ -21,13 +24,6 @@ public class MethodTreeDTO {
     private long endTimestamp;
     private List<MethodTreeDTO> children = new ArrayList<>();
 
-    public MethodInfo getMethodInfo() {
-        return methodInfo;
-    }
-
-    public void setMethodInfo(MethodInfo methodInfo) {
-        this.methodInfo = methodInfo;
-    }
 
     public long getBeginTimestamp() {
         return beginTimestamp;
@@ -59,5 +55,21 @@ public class MethodTreeDTO {
 
     public void setSort(Integer sort) {
         this.sort = sort;
+    }
+
+    public String getClizzName() {
+        return clizzName;
+    }
+
+    public void setClizzName(String clizzName) {
+        this.clizzName = clizzName;
+    }
+
+    public String getMethodName() {
+        return methodName;
+    }
+
+    public void setMethodName(String methodName) {
+        this.methodName = methodName;
     }
 }
