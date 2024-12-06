@@ -44,4 +44,13 @@ public class MethodCoverage {
     public void setCoverageLine(ArrayList<Integer> coverageLine) {
         this.coverageLine = coverageLine;
     }
+
+    @Override
+    public String toString() {
+        return "MethodCoverage{" +
+                "className='" + className + '\'' +
+                ", methodName='" + methodName + '\'' +
+                ", coverageLine=" + coverageLine +
+                '}';
+    }
 }

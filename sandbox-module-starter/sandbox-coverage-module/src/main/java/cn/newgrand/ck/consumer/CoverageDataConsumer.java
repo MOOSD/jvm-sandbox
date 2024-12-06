@@ -6,8 +6,8 @@ import cn.newgrand.ck.pojo.ClassCoverage;
 import cn.newgrand.ck.pojo.CoverageDateReportRequest;
 import cn.newgrand.ck.pojo.MethodCoverage;
 import cn.newgrand.ck.reporter.DataReporter;
-import cn.newgrand.ck.reporter.HttpDataReporter;
-import cn.newgrand.ck.reporter.LogDataReporter;
+import cn.newgrand.ck.reporter.HttpReporter;
+import cn.newgrand.ck.reporter.LogReporter;
 import com.alibaba.jvm.sandbox.api.resource.AgentInfo;
 import com.alibaba.jvm.sandbox.api.resource.ConfigInfo;
 import com.alibaba.jvm.sandbox.api.tools.ConcurrentHashSet;
@@ -38,6 +38,7 @@ public class CoverageDataConsumer implements DataConsumer<MethodCoverage> {
 
     /**
      * 整个类的类覆盖率的map
+     * todo 删除此map，释放内存
      */
     private final ConcurrentHashMap<String, ClassCoverage> appClassCoverage = new ConcurrentHashMap<>();
 
@@ -49,7 +50,10 @@ public class CoverageDataConsumer implements DataConsumer<MethodCoverage> {
 
     @Override
     public void consume(MethodCoverage data) {
-        logger.debug("数据消费");
+        logger.debug("数据消费:{}", data.toString());
+        if (data.getCoverageLine().isEmpty()){
+            return;
+        }
         // 获取类覆盖率
         String className = data.getClassName();
         ClassCoverage classCoverage = appClassCoverage.computeIfAbsent(className, ClassCoverage::new);
@@ -65,7 +69,7 @@ public class CoverageDataConsumer implements DataConsumer<MethodCoverage> {
     @Override
     public void stop() {
         // 停止消费
-        logger.info("覆盖率模块消费停止，剩余未更新的类覆盖率数量 {}",sendClassCoverage.size());
+        logger.info("上报剩余的 {} 条数据", sendClassCoverage.size());
         sendData();
     }
 
@@ -75,14 +79,20 @@ public class CoverageDataConsumer implements DataConsumer<MethodCoverage> {
      * 发送数据(对sendClassCoverage的重置，因此必须是同步的)
      */
     private void readyToSend(ClassCoverage classCoverage){
-        if (classCoverage != null){
+        String sendJson = null;
+        synchronized (sendClassCoverage) {
             sendClassCoverage.add(classCoverage);
+            if (sendClassCoverage.size() > 5) {
+                CoverageDateReportRequest coverageDateReportRequest = new CoverageDateReportRequest();
+                coverageDateReportRequest.setInstanceId(agentInfo.getInstanceId());
+                coverageDateReportRequest.setClassCoverageCollection(sendClassCoverage);
+                sendJson = JSON.toJSONString(coverageDateReportRequest);
+                sendClassCoverage.clear();
+            }
         }
 
-        synchronized (sendClassCoverage) {
-            if (sendClassCoverage.size() > 50) {
-                sendData();
-            }
+        if(sendJson != null){
+            dataReporter.report(sendJson);
         }
 
     }
@@ -95,7 +105,7 @@ public class CoverageDataConsumer implements DataConsumer<MethodCoverage> {
             CoverageDateReportRequest coverageDateReportRequest = new CoverageDateReportRequest();
             coverageDateReportRequest.setInstanceId(agentInfo.getInstanceId());
             // 发送信息
-            coverageDateReportRequest.setClassCoverage(sendClassCoverage);
+            coverageDateReportRequest.setClassCoverageCollection(sendClassCoverage);
             String jsonString = JSON.toJSONString(coverageDateReportRequest);
             sendClassCoverage.clear();
             dataReporter.report(jsonString);
@@ -110,9 +120,7 @@ public class CoverageDataConsumer implements DataConsumer<MethodCoverage> {
         this.agentInfo = agentInfo;
         String coverageUrl = HkUtils.getUrl(configInfo.getHkServerIp(), configInfo.getHkServerPort(),
                 ApiPathConstant.COVERAGE_REPORT_URL);
-
-        // todo 更换Http发送器
-        this.dataReporter = new LogDataReporter(configInfo);
+        this.dataReporter = new LogReporter(new HttpReporter(coverageUrl));;
 
     }
 

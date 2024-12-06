@@ -26,6 +26,10 @@ public class ClassCoverage {
      */
     public void recordCoverage(int line){
         AtomicInteger counter = coverageLineMap.computeIfAbsent(line, key -> new AtomicInteger(0));
+        if(counter.get() > 999){
+            return;
+        }
+        // todo 数值溢出问题
         counter.incrementAndGet();
     }
 

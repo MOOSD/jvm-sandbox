@@ -6,13 +6,13 @@ import java.util.Set;
 
 public class CoverageDateReportRequest extends BaseCoverageDateReportRequest {
 
-    protected Set<ClassCoverage> classCoverage;
+    protected Set<ClassCoverage> classCoverageCollection;
 
-    public Set<ClassCoverage> getClassCoverage() {
-        return classCoverage;
+    public Set<ClassCoverage> getClassCoverageCollection() {
+        return classCoverageCollection;
     }
 
-    public void setClassCoverage(Set<ClassCoverage> classCoverage) {
-        this.classCoverage = classCoverage;
+    public void setClassCoverageCollection(Set<ClassCoverage> classCoverageCollection) {
+        this.classCoverageCollection = classCoverageCollection;
     }
 }

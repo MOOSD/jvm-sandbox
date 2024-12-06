@@ -20,5 +20,8 @@ public interface DataConsumer<T> {
     void consume(T data);
 
 
+    /**
+     * 停止消费的通知接口
+     */
     void stop();
 }

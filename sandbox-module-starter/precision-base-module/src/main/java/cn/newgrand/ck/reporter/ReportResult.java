@@ -19,4 +19,12 @@ public class ReportResult {
     public void setSuccess(boolean success) {
         this.success = success;
     }
+
+    public static ReportResult success(){
+        return new ReportResult(true);
+    }
+
+    public static ReportResult error(){
+        return new ReportResult(false);
+    }
 }

@@ -26,8 +26,7 @@ public class DataProcessor<T> {
 
     private final DataConsumer<T> dataConsumer;
 
-    private boolean isEnable =false;
-    private final List<CompletableFuture<Void>> featureList;
+    private volatile boolean isEnable = false;
 
 
     /**
@@ -36,7 +35,6 @@ public class DataProcessor<T> {
      */
     public DataProcessor(int consumerCount, int dataQueueSize, DataConsumer<T> consumer) {
         this.consumerCount = consumerCount;
-        featureList = new ArrayList<>(consumerCount);
         this.dataCount = new AtomicInteger(0);
         consumerThreadPool = new ThreadPoolExecutor(consumerCount, consumerCount,
                 0L, TimeUnit.MILLISECONDS,
@@ -58,47 +56,33 @@ public class DataProcessor<T> {
      * 激活数据处理和消费
      */
     public void enable(){
-        log.info("数据处理器激活");
         // 已经启动则忽略
         if (isEnable){
             return;
         }
-
+        isEnable = true;
         // 创建消费线程
         for (int i = 0; i < consumerCount; i++) {
-            CompletableFuture<Void> exceptionally = CompletableFuture.runAsync(whileTureDataConsumeRunnable(dataConsumer), consumerThreadPool)
-                    .exceptionally(throwable -> {
-                        log.error("数据处理线程异常：", throwable);
-                        return null;
-                    });
-            featureList.add(exceptionally);
+            CompletableFuture.runAsync(whileTureDataConsumeRunnable(dataConsumer), consumerThreadPool)
+                .exceptionally(throwable -> {
+                    log.error("数据处理线程异常：", throwable);
+                    return null;
+                });
         }
 
-        isEnable = true;
+        log.info("数据处理器激活");
     }
 
     /**
      * 终止消费行为
      */
     public void disable(){
-        log.info("数据处理器关闭");
         // 已停止则忽略
         if (!isEnable){
             return;
         }
-        // 停止所有的消费任务
-        featureList.forEach(future ->{
-            // 此consumer未曾执行
-            if (future == null){
-                return;
-            }
-            future.cancel(true);
-        });
-        featureList.clear();
         isEnable = false;
-        // 通知消费者消费停止
-        dataConsumer.stop();
-
+        log.info("数据处理器暂停");
     }
 
     /**
@@ -109,8 +93,9 @@ public class DataProcessor<T> {
             return null;
         }
         return () -> {
+            log.warn("消费开始{}",Thread.currentThread().getName());
             // 除非线程中断，否则不结束消费
-            while (!Thread.currentThread().isInterrupted()) {
+            while (isEnable) {
                 // 异常不终止消费行为
                 try {
                     T data = queue.get();
@@ -122,6 +107,8 @@ public class DataProcessor<T> {
                     log.error("数据消费异常", exception);
                 }
             }
+            consumer.stop();
+            log.warn("消费停止 {}",Thread.currentThread().getName());
         };
     }
 
