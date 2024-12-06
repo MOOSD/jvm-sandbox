@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 public class CoverageDataConsumer implements DataConsumer<MethodCoverage> {
@@ -33,19 +34,13 @@ public class CoverageDataConsumer implements DataConsumer<MethodCoverage> {
      */
     private final AgentInfo agentInfo;
 
-
-
-
-    /**
-     * 整个类的类覆盖率的map
-     * todo 删除此map，释放内存
-     */
-    private final ConcurrentHashMap<String, ClassCoverage> appClassCoverage = new ConcurrentHashMap<>();
+    private final ReentrantReadWriteLock.ReadLock readLock;
+    private final ReentrantReadWriteLock.WriteLock writeLock;
 
     /**
      * 要发送的
      */
-    private final ConcurrentHashSet<ClassCoverage> sendClassCoverage = new ConcurrentHashSet<>();
+    private final ConcurrentHashMap<String, ClassCoverage> sendClassCoverage = new ConcurrentHashMap<>();
 
 
     @Override
@@ -56,11 +51,16 @@ public class CoverageDataConsumer implements DataConsumer<MethodCoverage> {
         }
         // 获取类覆盖率
         String className = data.getClassName();
-        ClassCoverage classCoverage = appClassCoverage.computeIfAbsent(className, ClassCoverage::new);
-        for (Integer i : data.getCoverageLine()) {
-            classCoverage.recordCoverage(i);
+        try{
+            readLock.lock();
+            ClassCoverage classCoverage = sendClassCoverage.computeIfAbsent(className, ClassCoverage::new);
+            for (Integer i : data.getCoverageLine()) {
+                classCoverage.recordCoverage(i);
+            }
+        }finally {
+            readLock.unlock();
         }
-        readyToSend(classCoverage);
+        readyToSend();
     }
 
     /**
@@ -78,17 +78,19 @@ public class CoverageDataConsumer implements DataConsumer<MethodCoverage> {
      * 阻塞的发送覆盖率数据
      * 发送数据(对sendClassCoverage的重置，因此必须是同步的)
      */
-    private void readyToSend(ClassCoverage classCoverage){
+    private void readyToSend(){
         String sendJson = null;
-        synchronized (sendClassCoverage) {
-            sendClassCoverage.add(classCoverage);
+        try{
+            writeLock.lock();
             if (sendClassCoverage.size() > 5) {
                 CoverageDateReportRequest coverageDateReportRequest = new CoverageDateReportRequest();
                 coverageDateReportRequest.setInstanceId(agentInfo.getInstanceId());
-                coverageDateReportRequest.setClassCoverageCollection(sendClassCoverage);
+                coverageDateReportRequest.setClassCoverageCollection(sendClassCoverage.values());
                 sendJson = JSON.toJSONString(coverageDateReportRequest);
                 sendClassCoverage.clear();
             }
+        }finally {
+            writeLock.unlock();
         }
 
         if(sendJson != null){
@@ -105,7 +107,7 @@ public class CoverageDataConsumer implements DataConsumer<MethodCoverage> {
             CoverageDateReportRequest coverageDateReportRequest = new CoverageDateReportRequest();
             coverageDateReportRequest.setInstanceId(agentInfo.getInstanceId());
             // 发送信息
-            coverageDateReportRequest.setClassCoverageCollection(sendClassCoverage);
+            coverageDateReportRequest.setClassCoverageCollection(sendClassCoverage.values());
             String jsonString = JSON.toJSONString(coverageDateReportRequest);
             sendClassCoverage.clear();
             dataReporter.report(jsonString);
@@ -118,6 +120,9 @@ public class CoverageDataConsumer implements DataConsumer<MethodCoverage> {
         System.out.println(System.getProperties());
         this.configInfo = configInfo;
         this.agentInfo = agentInfo;
+        ReentrantReadWriteLock reentrantReadWriteLock = new ReentrantReadWriteLock();
+        readLock = reentrantReadWriteLock.readLock();
+        writeLock = reentrantReadWriteLock.writeLock();
         String coverageUrl = HkUtils.getUrl(configInfo.getHkServerIp(), configInfo.getHkServerPort(),
                 ApiPathConstant.COVERAGE_REPORT_URL);
         this.dataReporter = new LogReporter(new HttpReporter(coverageUrl));;
