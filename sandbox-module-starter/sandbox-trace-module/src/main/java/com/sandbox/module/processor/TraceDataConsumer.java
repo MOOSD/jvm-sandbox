@@ -43,6 +43,7 @@ public class TraceDataConsumer implements DataConsumer<MethodTree> {
             traceBaseInfo.setSpanId(data.getSpanId());
             traceBaseInfo.setRequestUrl(data.getRequestUri());
             traceBaseInfo.setSort(data.getSort());
+            traceBaseInfo.setSortRpc(data.getSortRpc());
             final MethodInfo[] methodInfoList = new MethodInfo[data.getSort()];
             traceBaseInfo.setSimpleTree(data.convertToDTO(data.getCurrent(),methodInfoList , data.getBaseInfo()));
             traceBaseInfo.setNodeDetail(methodInfoList);

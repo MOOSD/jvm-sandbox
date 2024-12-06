@@ -60,4 +60,13 @@ public class TraceBaseInfo {
     private Integer sort;
     private MethodInfo[] nodeDetail;
     private MethodTreeDTO simpleTree;
+    private List<Integer> sortRpc;
+
+    public List<Integer> getSortRpc() {
+        return sortRpc;
+    }
+
+    public void setSortRpc(List<Integer> sortRpc) {
+        this.sortRpc = sortRpc;
+    }
 }

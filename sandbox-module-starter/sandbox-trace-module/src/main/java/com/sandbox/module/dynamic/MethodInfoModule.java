@@ -64,10 +64,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
                             final MethodTree methodTree;
                             if (advice.isProcessTop()) {
                                 methodTree = new MethodTree(info);
-                                RequestContext reqTtl = TraceIdModule.getRequestTtl();
-                                methodTree.setTraceId(reqTtl.getTraceId());
-                                methodTree.setSpanId(reqTtl.getSpanId());
-                                methodTree.setRequestUri(reqTtl.getRequestUrl());
+                                initTree(advice, methodTree);
                                 advice.attach(methodTree);
                             } else {
                                 methodTree = advice.getProcessTop().attachment();
@@ -78,6 +75,13 @@ public class MethodInfoModule implements Module, LoadCompleted {
                                 methodTree.setSend(true);
                             }
                         }
+                    }
+
+                    public void initTree(final Advice advice , MethodTree methodTree) {
+                        RequestContext reqTtl = TraceIdModule.getRequestTtl();
+                        methodTree.setTraceId(reqTtl.getTraceId());
+                        methodTree.setSpanId(reqTtl.getSpanId());
+                        methodTree.setRequestUri(reqTtl.getRequestUrl());
                     }
 
 
@@ -110,11 +114,24 @@ public class MethodInfoModule implements Module, LoadCompleted {
                     }
 
                     @Override
+                    protected void beforeCall(Advice advice,
+                                              int callLineNum,
+                                              String callJavaClassName, String callJavaMethodName, String callJavaMethodDesc) {
+                        if(Objects.nonNull(TraceIdModule.getRequestTtl())){
+                            final MethodTree methodTree = advice.getProcessTop().attachment() != null ? advice.getProcessTop().attachment() : null;
+                            if (methodTree != null) {
+                                methodTree.addMethodCell(callLineNum + " : " + callJavaClassName + " : " + callJavaMethodName);
+                            }
+                        }
+                    }
+
+                    @Override
                     protected void afterReturning(Advice advice) throws Throwable {
                         if(Objects.nonNull(TraceIdModule.getRequestTtl())){
                             final MethodTree methodTree = advice.getProcessTop().attachment();
                             if(methodTree.getBegin() && methodTree.getCurrentData().getSend()){
-                                methodTree.setSend(false);
+                                methodTree.setSortRpc(TraceIdModule.getSortList());
+                                methodTree.setSend(true);
                                 dataProcessor.add(advice.getProcessTop().attachment());
                             }
                             methodTree.end();
@@ -131,7 +148,8 @@ public class MethodInfoModule implements Module, LoadCompleted {
                                 methodTree.addBaseInfo(methodInfo);
                             }
                             if(methodTree.getBegin() && methodTree.getCurrentData().getSend()){
-                                methodTree.setSend(false);
+                                methodTree.setSortRpc(TraceIdModule.getSortList());
+                                methodTree.setSend(true);
                                 dataProcessor.add(advice.getProcessTop().attachment());
                             }
                             methodTree.end();

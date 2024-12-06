@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -28,11 +30,33 @@ public class TraceIdModule implements Module, LoadCompleted {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-     final static TransmittableThreadLocal<String> traceIdThreadLocal = new TransmittableThreadLocal<>();
+    final static TransmittableThreadLocal<Integer> sortTtl = new TransmittableThreadLocal<Integer>() {
+        @Override
+        protected Integer initialValue() {
+            return 0;
+        }
+    };
+    public static Integer getSort(){
+        return sortTtl.get();
+    }
+    public static void addSort(){
+        sortTtl.set(Objects.requireNonNull(sortTtl.get())+1);
+    }
+    final static TransmittableThreadLocal<List<Integer>> sortList = new TransmittableThreadLocal<List<Integer>>(){
+        @Override
+        protected List<Integer> initialValue() {
+            return new ArrayList<>();
+        }
+    };
+    public static List<Integer> getSortList(){
+        return sortList.get();
+    }
+    final static TransmittableThreadLocal<String> traceIdThreadLocal = new TransmittableThreadLocal<>();
     final static TransmittableThreadLocal<RequestContext> requestTtl = new TransmittableThreadLocal<>();
     public static String getThreadLocalValue(){
         return traceIdThreadLocal.get();
     }
+
 
     public static RequestContext getRequestTtl(){
         return requestTtl.get();
@@ -148,7 +172,6 @@ public class TraceIdModule implements Module, LoadCompleted {
                             RequestContext requestContext = new RequestContext(uuid, null, (String) getHeader(requestObj, "User-Agent"),requestURI);
                             traceIdThreadLocal.set(uuid);
                             requestTtl.set(requestContext);
-
                             logger.info("Injected traceId: {} into request: {}", uuid, requestURI);
                         }
 
@@ -185,21 +208,30 @@ public class TraceIdModule implements Module, LoadCompleted {
                     @Override
                     protected void before(Advice advice) throws Throwable {
                         Object o = advice.getParameterArray()[0];
-
-                        header(o, LinkConstant.TRACE_ID, traceIdThreadLocal.get());
-                        header(o, LinkConstant.SPAN_ID, requestTtl.get().getSpanId());
+                        Integer sort = sortTtl.get();
+                        String spanId = requestTtl.get().getSpanId() + "->" + sort;
+                        sortList.get().add(sort);
+                        logger.info("feign spanId:{}", spanId);
+                        header(o, traceIdThreadLocal.get());
+                        header(o, spanId);
                     }
                 });
-
     }
 
 
-    private Object header(Object obj, String name, String... values) {
+    private void header(Object obj, String... values) {
         try {
             Method header = obj.getClass().getMethod("header", String.class, String[].class);
-            return header.invoke(obj, name, values);
-        } catch (Exception e) {
-            return null;
+            header.invoke(obj, LinkConstant.TRACE_ID, values);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void header(Object obj, Integer... values) {
+        try {
+            Method header = obj.getClass().getMethod("header", String.class, Integer[].class);
+            header.invoke(obj, LinkConstant.SPAN_ID, values);
+        } catch (Exception ignored) {
         }
     }
 

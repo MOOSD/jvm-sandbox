@@ -1,6 +1,7 @@
 package com.sandbox.module.node;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class MethodTreeDTO {
@@ -22,7 +23,9 @@ public class MethodTreeDTO {
     private Integer sort;
     private long beginTimestamp;
     private long endTimestamp;
+    private List<String> methodCell = new LinkedList<>();
     private List<MethodTreeDTO> children = new ArrayList<>();
+
 
 
     public long getBeginTimestamp() {
@@ -71,5 +74,13 @@ public class MethodTreeDTO {
 
     public void setMethodName(String methodName) {
         this.methodName = methodName;
+    }
+
+    public List<String> getMethodCell() {
+        return methodCell;
+    }
+
+    public void setMethodCell(List<String> methodCell) {
+        this.methodCell = methodCell;
     }
 }
