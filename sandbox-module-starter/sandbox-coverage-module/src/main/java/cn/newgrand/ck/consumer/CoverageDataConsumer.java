@@ -10,13 +10,13 @@ import cn.newgrand.ck.reporter.HttpReporter;
 import cn.newgrand.ck.reporter.LogReporter;
 import com.alibaba.jvm.sandbox.api.resource.AgentInfo;
 import com.alibaba.jvm.sandbox.api.resource.ConfigInfo;
-import com.alibaba.jvm.sandbox.api.tools.ConcurrentHashSet;
 import com.alibaba.jvm.sandbox.api.tools.HkUtils;
 import com.alibaba.jvm.sandbox.api.tools.JSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
@@ -100,18 +100,16 @@ public class CoverageDataConsumer implements DataConsumer<MethodCoverage> {
     }
 
     private void sendData(){
-        synchronized (sendClassCoverage) {
-            if (sendClassCoverage.isEmpty()){
-                return;
-            }
-            CoverageDateReportRequest coverageDateReportRequest = new CoverageDateReportRequest();
-            coverageDateReportRequest.setInstanceId(agentInfo.getInstanceId());
-            // 发送信息
-            coverageDateReportRequest.setClassCoverageCollection(sendClassCoverage.values());
-            String jsonString = JSON.toJSONString(coverageDateReportRequest);
-            sendClassCoverage.clear();
-            dataReporter.report(jsonString);
+        if (sendClassCoverage.isEmpty()){
+            return;
         }
+        CoverageDateReportRequest coverageDateReportRequest = new CoverageDateReportRequest();
+        coverageDateReportRequest.setInstanceId(agentInfo.getInstanceId());
+        // 发送信息
+        coverageDateReportRequest.setClassCoverageCollection(sendClassCoverage.values());
+        String jsonString = JSON.toJSONString(coverageDateReportRequest);
+        sendClassCoverage.clear();
+        dataReporter.report(jsonString);
     }
 
 

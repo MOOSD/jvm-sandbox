@@ -3,8 +3,6 @@ package cn.newgrand.ck.executor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,9 +18,11 @@ public class DataProcessor<T> {
 
     private final AsyncDataQueue<T> queue;
 
-    protected AtomicInteger dataCount;
+    protected AtomicInteger consumerDataCounter;
 
     private final int consumerCount;
+
+    private final AtomicInteger activeConsumerCounter;
 
     private final DataConsumer<T> dataConsumer;
 
@@ -35,7 +35,8 @@ public class DataProcessor<T> {
      */
     public DataProcessor(int consumerCount, int dataQueueSize, DataConsumer<T> consumer) {
         this.consumerCount = consumerCount;
-        this.dataCount = new AtomicInteger(0);
+        consumerDataCounter = new AtomicInteger(0);
+        activeConsumerCounter = new AtomicInteger(0);
         consumerThreadPool = new ThreadPoolExecutor(consumerCount, consumerCount,
                 0L, TimeUnit.MILLISECONDS,
                 new SynchronousQueue<>());
@@ -68,6 +69,7 @@ public class DataProcessor<T> {
                     log.error("数据处理线程异常：", throwable);
                     return null;
                 });
+            activeConsumerCounter.incrementAndGet();
         }
 
         log.info("数据处理器激活");
@@ -93,7 +95,7 @@ public class DataProcessor<T> {
             return null;
         }
         return () -> {
-            log.warn("消费开始{}",Thread.currentThread().getName());
+            log.warn("线程 {} 消费开始",Thread.currentThread().getName());
             // 除非线程中断，否则不结束消费
             while (isEnable) {
                 // 异常不终止消费行为
@@ -101,17 +103,22 @@ public class DataProcessor<T> {
                     T data = queue.get();
                     if (Objects.nonNull(data)) {
                         consumer.consume(data);
-                        dataCount.incrementAndGet();
+                        consumerDataCounter.incrementAndGet();
                     }
                 } catch (Throwable exception) {
                     log.error("数据消费异常", exception);
                 }
             }
-            consumer.stop();
-            log.warn("消费停止 {}",Thread.currentThread().getName());
+            log.warn("线程 {} 消费停止 ",Thread.currentThread().getName());
+            consumerStop();
         };
     }
 
-
+    private void consumerStop(){
+        if (activeConsumerCounter.decrementAndGet() < 1) {
+            log.warn("所有消费现场停止消停,消费数据总数:{}",consumerDataCounter.get());
+            dataConsumer.stop();
+        }
+    }
 
 }
