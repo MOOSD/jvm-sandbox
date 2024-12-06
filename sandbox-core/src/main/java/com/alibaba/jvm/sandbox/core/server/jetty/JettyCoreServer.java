@@ -201,6 +201,13 @@ public class JettyCoreServer implements CoreServer {
             logger.info(bindMessage);
             System.out.println(bindMessage);
 
+            // 注册关闭钩子
+            Runtime.getRuntime().addShutdownHook(new Thread(()->{
+                // 通知模块停止
+                jvmSandbox.stop();
+                // 注销Agent
+                hkAgentRegistrar.deregister();
+            }));
         } catch (Throwable cause) {
             // 这里会抛出到目标应用层，所以在这里留下错误信息
             logger.warn("initialize server failed.");

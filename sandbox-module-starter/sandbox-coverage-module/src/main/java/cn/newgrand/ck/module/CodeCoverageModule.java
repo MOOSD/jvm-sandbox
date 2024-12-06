@@ -23,7 +23,7 @@ import java.util.Objects;
 
 @MetaInfServices(Module.class)
 @Information(id = "code-coverage", version = "0.0.1")
-public class CodeCoverageModule implements Module, LoadCompleted, ModuleLifecycle {
+public class CodeCoverageModule implements Module, LoadCompleted {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
     @Resource
     private ModuleEventWatcher moduleEventWatcher;
@@ -92,8 +92,14 @@ public class CodeCoverageModule implements Module, LoadCompleted, ModuleLifecycl
         log.info("鹰眼服务端状态发生变化：{}",available);
         if (available){
             dataProcessor.enable();
-        }else
+        }else{
             dataProcessor.disable();
+        }
+    }
+
+    @Override
+    public void agentStop() {
+        dataProcessor.disable();
     }
 
     //构建匹配类的正则表达式
@@ -117,24 +123,5 @@ public class CodeCoverageModule implements Module, LoadCompleted, ModuleLifecycl
         this.dataProcessor = new DataProcessor<>(2,10240, coverageDataConsumer);
     }
 
-    @Override
-    public void onLoad() throws Throwable {
 
-    }
-
-    @Override
-    public void onUnload() throws Throwable {
-        log.warn("模块卸载");
-        dataProcessor.disable();
-    }
-
-    @Override
-    public void onActive() throws Throwable {
-
-    }
-
-    @Override
-    public void onFrozen() throws Throwable {
-
-    }
 }

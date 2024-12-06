@@ -12,4 +12,8 @@ public interface ModuleNotifier {
     default void hkServerStateChange(boolean available){
 
     }
+
+    default void agentStop(){
+
+    }
 }
