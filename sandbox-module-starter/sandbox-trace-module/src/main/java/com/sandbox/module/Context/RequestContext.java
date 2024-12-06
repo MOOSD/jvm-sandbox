@@ -9,13 +9,15 @@ public class RequestContext {
 
     private String requestUrl;
 
+    private int sort;
+
     public RequestContext(String traceId, String spanId, String message, String requestUrl) {
         this.traceId = traceId;
         this.requestUrl = requestUrl;
         if(spanId != null){
-            this.spanId = spanId + ".0";
+            this.spanId = spanId;
         } else {
-            this.spanId = "0";
+            this.spanId = "root";
         }
         this.message = message;
     }
@@ -59,5 +61,13 @@ public class RequestContext {
 
     public void setRequestUrl(String requestUrl) {
         this.requestUrl = requestUrl;
+    }
+
+    public int getSort() {
+        return sort;
+    }
+
+    public void setSort(int sort) {
+        this.sort = sort;
     }
 }

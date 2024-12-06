@@ -1,5 +1,6 @@
 package com.sandbox.module.node;
 
+import com.sandbox.module.dynamic.TraceIdModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,13 +15,16 @@ public class MethodTree {
     // 根节点
     private final MethodNode root;
 
+    // 微服务外调id
+    private List<Integer> sortRpc;
     // 树的基础信息
     // 树的唯一标识
     private String traceId;
     // 跨微服务调用深度
     private String spanId;
     // 单服务调用顺序
-    private Integer sort = 0; 
+    private Integer sort = 0;
+    // 请求url
     private String requestUri;
 
     // 是否已发送过
@@ -42,8 +46,6 @@ public class MethodTree {
 
     // 方法详细信息列表
     private final Map<Integer, MethodInfo> baseInfo;
-
-
 
     public void addBaseInfo(MethodInfo info){
         baseInfo.put(this.getCurrentSort(), info);
@@ -74,6 +76,10 @@ public class MethodTree {
         return this;
     }
 
+    public void addMethodCell(String cell){
+        this.current.addMethodCell(cell);
+    }
+
     // 判断当前节点是否为根节点
     public boolean isTop() {
         return current.isRoot();
@@ -85,6 +91,7 @@ public class MethodTree {
      * @return this
      */
     public MethodTree begin(MethodInfo data) {
+        TraceIdModule.addSort();
         current = new MethodNode(current, data, this.sort++);
         current.markBegin();
         return this;
@@ -197,6 +204,14 @@ public class MethodTree {
         this.requestUri = requestUri;
     }
 
+    public List<Integer> getSortRpc() {
+        return sortRpc;
+    }
+
+    public void setSortRpc(List<Integer> sortRpc) {
+        this.sortRpc = sortRpc;
+    }
+
     // 用于回调的接口
     private interface Callback {
         void callback(int deep, boolean isLast, String prefix, MethodNode node);
@@ -219,6 +234,7 @@ public class MethodTree {
         dto.setBeginTimestamp(node.beginTimestamp);
         dto.setEndTimestamp(node.endTimestamp);
         dto.setSort(sort);
+        dto.setMethodCell(node.methodCells);
 
         // 使用迭代法代替递归法，适用于大树结构
         Deque<MethodNode> stack = new ArrayDeque<>();
@@ -250,6 +266,7 @@ public class MethodTree {
                     childDTO.setEndTimestamp(child.endTimestamp);
                     childDTO.setDepth(child.depth);
                     childDTO.setSort(childSort);
+                    childDTO.setMethodCell(child.methodCells);
                     children.add(childDTO);
                     stack.push(child);
                     dtoStack.push(childDTO);
@@ -296,6 +313,7 @@ public class MethodTree {
         private long endTimestamp;   // 结束时间戳
         private final int depth;     // 节点的深度
 
+        private List<String> methodCells = new LinkedList<>();
         // 构造方法：创建一个子节点
         private MethodNode(MethodNode parent, MethodInfo data, Integer sort) {
             this.parent = parent;
@@ -313,6 +331,10 @@ public class MethodTree {
             this.parent = null;
             this.data = data;
             this.depth = 0;
+        }
+
+        public void addMethodCell(String methodCell) {
+            methodCells.add(methodCell);
         }
 
         // 判断是否是根节点
@@ -349,6 +371,14 @@ public class MethodTree {
 
         public Integer getSort() {
             return sort;
+        }
+
+        public List<String> getMethodCells() {
+            return methodCells;
+        }
+
+        public void setMethodCells(List<String> methodCells) {
+            this.methodCells = methodCells;
         }
     }
 }
