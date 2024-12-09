@@ -39,8 +39,8 @@ public class TraceIdModule implements Module, LoadCompleted {
     public static Integer getSort(){
         return sortTtl.get();
     }
-    public static void addSort(){
-        sortTtl.set(Objects.requireNonNull(sortTtl.get())+1);
+    public static void setSort(int sort){
+        sortTtl.set(sort);
     }
     final static TransmittableThreadLocal<List<Integer>> sortList = new TransmittableThreadLocal<List<Integer>>(){
         @Override

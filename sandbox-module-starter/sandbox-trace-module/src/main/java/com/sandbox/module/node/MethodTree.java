@@ -91,8 +91,8 @@ public class MethodTree {
      * @return this
      */
     public MethodTree begin(MethodInfo data) {
-        TraceIdModule.addSort();
         current = new MethodNode(current, data, this.sort++);
+        TraceIdModule.setSort(this.sort);
         current.markBegin();
         return this;
     }
