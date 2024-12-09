@@ -5,6 +5,7 @@ import org.springframework.boot.loader.archive.JarFileArchive;
 
 import java.io.*;
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.InvocationTargetException;
 import java.net.*;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;

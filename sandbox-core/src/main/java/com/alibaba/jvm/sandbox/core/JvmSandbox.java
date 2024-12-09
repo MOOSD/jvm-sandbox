@@ -125,6 +125,10 @@ public class JvmSandbox implements HKServerObserver {
         return coreModuleManager;
     }
 
+    public void stop(){
+        coreModuleManager.agentIsStop();
+    }
+
     /**
      * 销毁沙箱
      */

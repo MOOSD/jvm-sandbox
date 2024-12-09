@@ -563,6 +563,26 @@ public class DefaultCoreModuleManager implements CoreModuleManager {
         }
     }
 
+    @Override
+    public void agentIsStop() {
+        // 通知每个模块，鹰眼服务器状态发生了变化
+        for (CoreModule coreModule : loadedModuleBOMap.values()) {
+            if (!(coreModule.isLoaded() && coreModule.isActivated())){
+                continue;
+            }
+            String jarName = coreModule.getJarFile().getName();
+            String moduleId = coreModule.getUniqueId();
+            try{
+                Module module = coreModule.getModule();
+                module.agentStop();
+                logger.warn("agent关闭，通知模块 jar:{} module:{} ", jarName, moduleId);
+            }catch (Exception e){
+                logger.error("通知模块时出现异常, 模块 jar:{} module:{} ", jarName, moduleId);
+                logger.error("异常堆栈：",e);
+            }
+        }
+    }
+
     /**
      * 用户模块文件加载回调
      */

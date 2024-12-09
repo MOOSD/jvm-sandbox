@@ -79,8 +79,7 @@ public class HkAgentRegistrar {
         serviceIsAvailable(true);
 
         logger.info("agent注册成功:{}", registerVO.getSuccess());
-        // 注册关闭钩子
-        Runtime.getRuntime().addShutdownHook(new Thread(this::deregister));
+
         // 开启健康检查 和 自动注册
         healthStatusCheck();
 
