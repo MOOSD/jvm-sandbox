@@ -77,14 +77,10 @@ public class TraceIdModule implements Module, LoadCompleted {
                     @Override
                     protected void before(Advice advice) throws Throwable {
                         Object serverWebExchange = advice.getParameterArray()[0];
-
                         Method getRequest = getMethod(serverWebExchange, "getRequest");
                         Object serverHttpRequest = getRequest.invoke(serverWebExchange);
                         Class<?> serverHttpRequestClazz = serverHttpRequest.getClass();
-
-
                         // 通过反射获取请求头中的traceId属性
-
                         Method getHeaders = getMethod(serverHttpRequest, "getHeaders");
                         Object headers = getHeaders.invoke(serverHttpRequest);
 
@@ -92,6 +88,7 @@ public class TraceIdModule implements Module, LoadCompleted {
 
                         get.setAccessible(true);
                         Object headerList = get.invoke(headers, LinkConstant.TRACE_ID);
+                        Object headerSpan = get.invoke(headers, LinkConstant.SPAN_ID);
 
 
                         Object userAgent = get.invoke(headers, "User-Agent");
@@ -100,21 +97,15 @@ public class TraceIdModule implements Module, LoadCompleted {
                         // 如果 taceId 不存在则生成唯一 traceId 并且将其放入到请求头中
                         if(Objects.isNull(headerList)){
                             String uuid = UUID.randomUUID().toString();
-
                             RequestContext requestContext = new RequestContext(uuid, null, "(String) agent" , requestUrl);
                             traceIdThreadLocal.set(uuid);
                             requestTtl.set(requestContext);
-
                             Method mutate = serverHttpRequestClazz.getMethod("mutate");
                             Object builder = mutate.invoke(serverHttpRequest);
                             Method header = builder.getClass().getMethod("header", String.class, String[].class);
                             header.setAccessible(true);
-
                             header.invoke(builder, LinkConstant.TRACE_ID, new String[]{uuid});
-
-
                         }
-
                     }
 
                     @Override
@@ -126,6 +117,8 @@ public class TraceIdModule implements Module, LoadCompleted {
 
                         traceIdThreadLocal.remove();
                         requestTtl.remove();
+                        sortTtl.remove();
+                        sortList.remove();
 
                     }
 
@@ -137,6 +130,8 @@ public class TraceIdModule implements Module, LoadCompleted {
                         }
                         traceIdThreadLocal.remove();
                         requestTtl.remove();
+                        sortTtl.remove();
+                        sortList.remove();
                     }
                 });
 
@@ -184,6 +179,8 @@ public class TraceIdModule implements Module, LoadCompleted {
                         }
                         traceIdThreadLocal.remove();
                         requestTtl.remove();
+                        sortTtl.remove();
+                        sortList.remove();
                     }
 
                     @Override
@@ -193,6 +190,8 @@ public class TraceIdModule implements Module, LoadCompleted {
                         }
                         traceIdThreadLocal.remove();
                         requestTtl.remove();
+                        sortTtl.remove();
+                        sortList.remove();
                     }
                 });
 
@@ -212,25 +211,17 @@ public class TraceIdModule implements Module, LoadCompleted {
                         String spanId = requestTtl.get().getSpanId() + "->" + sort;
                         sortList.get().add(sort);
                         logger.info("feign spanId:{}", spanId);
-                        header(o, traceIdThreadLocal.get());
-                        header(o, spanId);
+                        header(o, LinkConstant.TRACE_ID, traceIdThreadLocal.get());
+                        header(o,LinkConstant.SPAN_ID, spanId);
                     }
                 });
     }
 
 
-    private void header(Object obj, String... values) {
+    private void header(Object obj,String name, String... values) {
         try {
             Method header = obj.getClass().getMethod("header", String.class, String[].class);
-            header.invoke(obj, LinkConstant.TRACE_ID, values);
-        } catch (Exception ignored) {
-        }
-    }
-
-    private void header(Object obj, Integer... values) {
-        try {
-            Method header = obj.getClass().getMethod("header", String.class, Integer[].class);
-            header.invoke(obj, LinkConstant.SPAN_ID, values);
+            header.invoke(obj, name, values);
         } catch (Exception ignored) {
         }
     }
