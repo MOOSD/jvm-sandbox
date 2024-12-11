@@ -188,6 +188,7 @@ public class JettyCoreServer implements CoreServer {
                 hkAgentRegistrar = new HkAgentRegistrar(cfg, jvmSandbox);
                 // 激活服务注册
                 hkAgentRegistrar.active();
+
             }
             // 初始化加载所有的模块,包括系统模块和管理模块
             try {
