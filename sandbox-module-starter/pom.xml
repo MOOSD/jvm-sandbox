@@ -20,6 +20,7 @@
         <module>sandbox-trace-module</module>
         <module>sandbox-coverage-module</module>
         <module>sandbox-exception-module</module>
+        <module>sandbox-jvm-module</module>
     </modules>
 
     <build>

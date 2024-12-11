@@ -13,6 +13,7 @@ import com.sandbox.module.node.TraceBaseInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -23,8 +24,11 @@ public class TraceDataConsumer implements DataConsumer<MethodTree> {
 
     private final DataReporter dataReporter;
 
+    @Resource
+    private AgentInfo agentInfo;
 
     private final ReentrantReadWriteLock.WriteLock writeLock;
+
     ObjectMapper objectMapper = new ObjectMapper();
     public TraceDataConsumer(ConfigInfo configInfo, DataReporter dataReporter, AgentInfo agentInfo) {
         this.dataReporter = dataReporter;
@@ -39,6 +43,8 @@ public class TraceDataConsumer implements DataConsumer<MethodTree> {
         // 获取类覆盖率
         try{
             TraceBaseInfo traceBaseInfo = new TraceBaseInfo();
+           // traceBaseInfo.setAgentId(agentInfo.getInstanceId());
+            traceBaseInfo.setRequestCreateTime(data.getRequestCreateTime());
             traceBaseInfo.setTraceId(data.getTraceId());
             traceBaseInfo.setSpanId(data.getSpanId());
             traceBaseInfo.setRequestUrl(data.getRequestUri());
@@ -60,6 +66,7 @@ public class TraceDataConsumer implements DataConsumer<MethodTree> {
     }
 
     private void tryReport(String json){
-        logger.info("json:{}",json);
+        logger.info("链路数据{}",json);
+        //
     }
 }

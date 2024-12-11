@@ -24,6 +24,10 @@ import javax.annotation.Resource;
 import java.lang.annotation.Annotation;
 import java.util.*;
 
+/**
+ * 方法信息模块，用于动态监控方法的调用链路，收集调用信息并进行处理。
+ * @author qq
+ */
 @MetaInfServices(Module.class)
 @Information(id = "method-info", version = "0.0.1", author = "hts")
 public class MethodInfoModule implements Module, LoadCompleted {
@@ -32,7 +36,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
 
     private final HashSet<String> annotationSet = new HashSet<>();
 
-    private final String[] defaultAnnotation = {"PostMapping", "GetMapping", "RequestMapping","PutMapping","DeleteMapping"};
+    private final String[] defaultAnnotation = {"PostMapping", "GetMapping", "RequestMapping", "PutMapping", "DeleteMapping"};
 
     @Resource
     private ModuleEventWatcher moduleEventWatcher;
@@ -45,10 +49,14 @@ public class MethodInfoModule implements Module, LoadCompleted {
 
     private DataProcessor<MethodTree> dataProcessor;
 
+    /**
+     * 模块加载完成后的初始化工作
+     */
     @Override
     public void loadCompleted() {
         initModule();
 
+        // 通过正则匹配类名，设置监听器
         new EventWatchBuilder(moduleEventWatcher, EventWatchBuilder.PatternType.REGEX)
                 .onClass(buildClassPattern())
                 .includeSubClasses()
@@ -59,52 +67,64 @@ public class MethodInfoModule implements Module, LoadCompleted {
 
                     @Override
                     protected void before(Advice advice) throws Throwable {
-                        if(Objects.nonNull(TraceIdModule.getRequestTtl())){
+                        // 获取TraceId，如果存在则处理方法信息
+                        if (Objects.nonNull(TraceIdModule.getRequestTtl())) {
                             MethodInfo info = getMethodInfo(advice);
                             final MethodTree methodTree;
                             if (advice.isProcessTop()) {
+                                // 如果是最顶层方法，创建新的方法树
                                 methodTree = new MethodTree(info);
                                 initTree(advice, methodTree);
-                                advice.attach(methodTree);
+                                advice.attach(methodTree); // 将方法树附加到Advice上
                             } else {
+                                // 如果是嵌套方法，继续处理
                                 methodTree = advice.getProcessTop().attachment();
                                 methodTree.begin(info);
                             }
-                            if(!methodTree.getSend()){
+                            if (!methodTree.getSend()) {
                                 methodTree.setBegin(true);
                                 methodTree.setSend(true);
                             }
                         }
                     }
 
-                    public void initTree(final Advice advice , MethodTree methodTree) {
+                    /**
+                     * 初始化方法树的属性
+                     */
+                    public void initTree(final Advice advice, MethodTree methodTree) {
                         RequestContext reqTtl = TraceIdModule.getRequestTtl();
+                        Long requestCreateTime = TraceIdModule.getCreateTime();
                         methodTree.setTraceId(reqTtl.getTraceId());
                         methodTree.setSpanId(reqTtl.getSpanId());
                         methodTree.setRequestUri(reqTtl.getRequestUrl());
+                        methodTree.setRequestCreateTime(requestCreateTime);
                     }
 
-
+                    /**
+                     * 获取方法信息，包括方法名、类名、注解信息和方法参数
+                     */
                     public MethodInfo getMethodInfo(final Advice advice) {
                         MethodInfo methodInfo = new MethodInfo();
                         String methodName = advice.getBehavior().getName();
-                        String className = Objects.nonNull(advice.getTarget()) ? advice.getTarget().getClass().getName() : Objects.nonNull(advice.getBehavior()) ? advice.getBehavior().getDeclaringClass().getName() : null;
+                        String className = Objects.nonNull(advice.getTarget()) ? advice.getTarget().getClass().getName() :
+                                Objects.nonNull(advice.getBehavior()) ? advice.getBehavior().getDeclaringClass().getName() : null;
                         methodInfo.setClassName(className);
                         methodInfo.setMethodName(methodName);
-                            //获取注解
-                        if ( advice.getBehavior() != null && advice.getBehavior().getAnnotations() != null && advice.getBehavior().getAnnotations().length > 0) {
+
+                        // 获取方法的注解信息
+                        if (advice.getBehavior() != null && advice.getBehavior().getAnnotations() != null && advice.getBehavior().getAnnotations().length > 0) {
                             Annotation[] annotations = advice.getBehavior().getAnnotations();
                             String[] annotationNames = new String[annotations.length];
                             boolean isSend = false;
                             for (int i = 0; i < annotations.length; i++) {
                                 annotationNames[i] = annotations[i].annotationType().getSimpleName();
-                                if(annotationSet.contains(annotationNames[i])){
-                                    isSend = true;
+                                if (annotationSet.contains(annotationNames[i])) {
+                                    isSend = true; // 如果包含指定注解，则设置为发送
                                 }
                             }
                             methodInfo.setSend(isSend);
                             methodInfo.setAnnotations(annotationNames);
-                            if(advice.getParameterArray() != null && advice.getParameterArray().length > 0){
+                            if (advice.getParameterArray() != null && advice.getParameterArray().length > 0) {
                                 methodInfo.setParams(Arrays.stream(advice.getParameterArray())
                                         .map(String::valueOf)  // 将每个元素转为 String
                                         .toArray(String[]::new));
@@ -117,9 +137,10 @@ public class MethodInfoModule implements Module, LoadCompleted {
                     protected void beforeCall(Advice advice,
                                               int callLineNum,
                                               String callJavaClassName, String callJavaMethodName, String callJavaMethodDesc) {
-                        if(Objects.nonNull(TraceIdModule.getRequestTtl())){
+                        if (Objects.nonNull(TraceIdModule.getRequestTtl())) {
                             final MethodTree methodTree = advice.getProcessTop().attachment() != null ? advice.getProcessTop().attachment() : null;
                             if (methodTree != null) {
+                                // 添加被调用方法的信息
                                 methodTree.addMethodCell(callLineNum + " : " + callJavaClassName + " : " + callJavaMethodName);
                             }
                         }
@@ -127,11 +148,12 @@ public class MethodInfoModule implements Module, LoadCompleted {
 
                     @Override
                     protected void afterReturning(Advice advice) throws Throwable {
-                        if(Objects.nonNull(TraceIdModule.getRequestTtl())){
+                        if (Objects.nonNull(TraceIdModule.getRequestTtl())) {
                             final MethodTree methodTree = advice.getProcessTop().attachment();
-                            if(methodTree.getBegin() && methodTree.getCurrentData().getSend()){
+                            if (methodTree.getBegin() && methodTree.getCurrentData().getSend()) {
                                 methodTree.setSortRpc(TraceIdModule.getSortList());
                                 methodTree.setSend(true);
+                                // 添加数据到处理器
                                 dataProcessor.add(advice.getProcessTop().attachment());
                             }
                             methodTree.end();
@@ -140,14 +162,14 @@ public class MethodInfoModule implements Module, LoadCompleted {
 
                     @Override
                     protected void afterThrowing(Advice advice) throws Throwable {
-                        if(Objects.nonNull(TraceIdModule.getRequestTtl())){
+                        if (Objects.nonNull(TraceIdModule.getRequestTtl())) {
                             final MethodTree methodTree = advice.getProcessTop().attachment();
-                            if(Objects.nonNull(advice.getThrowable())){
+                            if (Objects.nonNull(advice.getThrowable())) {
                                 MethodInfo methodInfo = new MethodInfo();
                                 methodInfo.setLog(advice.getThrowable().getMessage());
                                 methodTree.addBaseInfo(methodInfo);
                             }
-                            if(methodTree.getBegin() && methodTree.getCurrentData().getSend()){
+                            if (methodTree.getBegin() && methodTree.getCurrentData().getSend()) {
                                 methodTree.setSortRpc(TraceIdModule.getSortList());
                                 methodTree.setSend(true);
                                 dataProcessor.add(advice.getProcessTop().attachment());
@@ -156,42 +178,49 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         }
                     }
                 });
-        if(agentInfo.hKServiceIsAvailable()){
+
+        // 启用数据处理器
+        if (agentInfo.hKServiceIsAvailable()) {
             dataProcessor.enable();
         }
     }
 
     @Override
     public void hkServerStateChange(boolean available) {
-        logger.info("鹰眼服务端状态发生变化：{}",available);
-        if (available){
+        logger.info("鹰眼服务端状态发生变化：{}", available);
+        if (available) {
             dataProcessor.enable();
-        }else {
+        } else {
             dataProcessor.disable();
         }
     }
 
+    /**
+     * 初始化模块，设置数据发送器、消费者等
+     */
     private void initModule() {
         logger.info("动态调用链路模块加载完成！");
+
         // 创建数据发送器
         DataReporter dataReporter = new LogDataReporter(configInfo);
         // 创建消费者
         TraceDataConsumer coverageDataConsumer = new TraceDataConsumer(configInfo, dataReporter, agentInfo);
         annotationSet.addAll(Arrays.asList(defaultAnnotation));
-        // 创建数据消费者
+
+        // 创建数据处理器
         this.dataProcessor = new DataProcessor<>(5, 1000, coverageDataConsumer);
     }
 
-
-    //根据实际情况 构建匹配类的正则表达式
+    /**
+     * 根据配置构建匹配类的正则表达式
+     */
     private String buildClassPattern() {
         String moduleTracePattern = configInfo.getModuleTracePattern();
-        if (Objects.isNull(moduleTracePattern) || moduleTracePattern.isEmpty()){
+        if (Objects.isNull(moduleTracePattern) || moduleTracePattern.isEmpty()) {
             logger.info("未指定项目所用类通配符，使用默认通配符");
             return "^cn\\.newgrand.*";
         }
-        logger.info("项目所用类通配符:{}",moduleTracePattern);
+        logger.info("项目所用类通配符: {}", moduleTracePattern);
         return moduleTracePattern;
-//        return "^cn\\.newgrand\\.ck\\.(controller|service|util|mapper).*";
     }
 }

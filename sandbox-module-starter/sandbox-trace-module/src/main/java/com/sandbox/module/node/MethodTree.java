@@ -17,55 +17,43 @@ public class MethodTree {
 
     // 微服务外调id
     private List<Integer> sortRpc;
+
     // 树的基础信息
-    // 树的唯一标识
     private String traceId;
-    // 跨微服务调用深度
     private String spanId;
-    // 单服务调用顺序
     private Integer sort = 0;
-    // 请求url
     private String requestUri;
-
-    // 是否已发送过
+    private Long requestCreateTime;
     private Boolean send = false;
-
-    // 当前节点
     private MethodNode current;
-
-    // 构造方法，初始化根节点
-    public MethodTree(MethodInfo title) {
-        this.baseInfo = new HashMap<>();
-        this.root = new MethodNode(title, this.sort++).markBegin();
-        this.current = root;
-    }
-
-    public Map<Integer, MethodInfo> getBaseInfo() {
-        return baseInfo;
-    }
 
     // 方法详细信息列表
     private final Map<Integer, MethodInfo> baseInfo;
 
-    public void addBaseInfo(MethodInfo info){
+    // 构造方法，初始化根节点
+    public MethodTree(MethodInfo title) {
+        this.baseInfo = new HashMap<>();
+        this.root = new MethodNode(title, this.sort++);
+        this.current = root;
+    }
+
+    // 获取树的基础信息
+    public Map<Integer, MethodInfo> getBaseInfo() {
+        return baseInfo;
+    }
+
+    // 添加方法详细信息
+    public void addBaseInfo(MethodInfo info) {
         baseInfo.put(this.getCurrentSort(), info);
     }
-    public MethodInfo getBaseInfo(Integer sort){
+
+    // 获取指定排序值的 MethodInfo
+    public MethodInfo getBaseInfo(Integer sort) {
         return baseInfo.get(sort);
     }
 
-    // 获取 send 状态
-    public Boolean getSend() {
-        return send;
-    }
-
-    // 设置 send 状态
-    public void setSend(Boolean send) {
-        this.send = send;
-    }
-
-    // 获取当前节点的 sort 值
-    public Integer getCurrentSort(){
+    // 获取当前节点的排序值
+    public Integer getCurrentSort() {
         return this.current.getSort();
     }
 
@@ -76,7 +64,8 @@ public class MethodTree {
         return this;
     }
 
-    public void addMethodCell(String cell){
+    // 添加方法单元
+    public void addMethodCell(String cell) {
         this.current.addMethodCell(cell);
     }
 
@@ -85,11 +74,7 @@ public class MethodTree {
         return current.isRoot();
     }
 
-    /**
-     * 创建一个新的分支节点
-     * @param data 节点数据
-     * @return this
-     */
+    // 创建一个新的分支节点
     public MethodTree begin(MethodInfo data) {
         current = new MethodNode(current, data, this.sort++);
         TraceIdModule.setSort(this.sort);
@@ -97,18 +82,12 @@ public class MethodTree {
         return this;
     }
 
-    /**
-     * 是否是开始节点
-     * @return
-     */
+    // 判断当前节点是否为开始节点
     public boolean getBegin() {
         return this.current.isBegin();
     }
 
-    /**
-     * 设置开始节点
-     * @return
-     */
+    // 设置开始节点
     public void setBegin(boolean begin) {
         this.current.setBegin(begin);
     }
@@ -132,10 +111,7 @@ public class MethodTree {
         return this;
     }
 
-    /**
-     * 结束当前分支节点
-     * @return this
-     */
+    // 结束当前分支节点
     public MethodTree end() {
         current.markEnd();
         if (!current.isRoot()) {
@@ -204,12 +180,32 @@ public class MethodTree {
         this.requestUri = requestUri;
     }
 
+    // 获取排序 RPC
     public List<Integer> getSortRpc() {
         return sortRpc;
     }
 
+    // 设置排序 RPC
     public void setSortRpc(List<Integer> sortRpc) {
         this.sortRpc = sortRpc;
+    }
+
+    // 获取请求创建时间
+    public Long getRequestCreateTime() {
+        return requestCreateTime;
+    }
+
+    // 设置请求创建时间
+    public void setRequestCreateTime(long requestCreateTime) {
+        this.requestCreateTime = requestCreateTime;
+    }
+
+    public boolean getSend() {
+        return send;
+    }
+
+    public void setSend(boolean b) {
+        this.send = b;
     }
 
     // 用于回调的接口
@@ -218,7 +214,7 @@ public class MethodTree {
     }
 
     // 将 MethodNode 转换为 DTO（数据传输对象）
-    public MethodTreeDTO convertToDTO(MethodNode node,final MethodInfo[] methodInfoList ,final Map<Integer , MethodInfo> methodInfoMap) {
+    public MethodTreeDTO convertToDTO(MethodNode node, final MethodInfo[] methodInfoList, final Map<Integer, MethodInfo> methodInfoMap) {
         if (node == null) {
             return null;
         }
@@ -305,15 +301,15 @@ public class MethodTree {
     private static class MethodNode {
 
         final MethodNode parent;
-        MethodInfo data; // 节点数据
+        MethodInfo data;
         private final int sort;
-        private boolean begin = false; // 是否开始
-        final List<MethodNode> children = new ArrayList<>(); // 子节点
-        private long beginTimestamp; // 开始时间戳
-        private long endTimestamp;   // 结束时间戳
-        private final int depth;     // 节点的深度
-
+        private boolean begin = false;
+        final List<MethodNode> children = new ArrayList<>();
+        private long beginTimestamp;
+        private long endTimestamp;
+        private final int depth;
         private List<String> methodCells = new LinkedList<>();
+
         // 构造方法：创建一个子节点
         private MethodNode(MethodNode parent, MethodInfo data, Integer sort) {
             this.parent = parent;
@@ -337,34 +333,28 @@ public class MethodTree {
             methodCells.add(methodCell);
         }
 
-        // 判断是否是根节点
         boolean isRoot() {
             return parent == null;
         }
 
-        // 判断是否是叶子节点（没有子节点）
         boolean isLeaf() {
             return children.isEmpty();
         }
 
-        // 标记节点为开始
         MethodNode markBegin() {
             beginTimestamp = currentTimeMillis();
             return this;
         }
 
-        // 标记节点为结束
         MethodNode markEnd() {
             endTimestamp = currentTimeMillis();
             return this;
         }
 
-        // 获取是否已开始
         public boolean isBegin() {
             return begin;
         }
 
-        // 设置是否已开始
         public void setBegin(boolean begin) {
             this.begin = begin;
         }
