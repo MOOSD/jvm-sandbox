@@ -74,6 +74,7 @@ public class CodeCoverageModule implements Module, LoadCompleted {
         };
         // 如果服务器状态可用，则启用数据处理器
         if(agentInfo.hKServiceIsAvailable()){
+            log.warn("鹰眼服务器状态不可用, 不启用数据处理器");
             dataProcessor.enable();
         }
 

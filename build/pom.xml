@@ -68,6 +68,7 @@
                                 <copy todir="${modules.temp.path}" flatten="true">
                                     <fileset dir="../sandbox-module-starter" includes="**/*.jar">
                                         <exclude name="**/sandbox-debug-module*.jar"/>
+                                        <exclude name="**/sandbox-exception-module*.jar"/>
                                     </fileset>
                                 </copy>
                                 <mkdir dir="${core.temp.path}"/>
