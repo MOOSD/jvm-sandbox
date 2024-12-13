@@ -53,15 +53,6 @@ public class TraceBaseInfo {
     public void setSimpleTree(MethodTreeDTO simpleTree) {
         this.simpleTree = simpleTree;
     }
-
-    private String traceId;
-    private String spanId;
-    private String requestUrl;
-    private Integer sort;
-    private MethodInfo[] nodeDetail;
-    private MethodTreeDTO simpleTree;
-    private List<Integer> sortRpc;
-
     public List<Integer> getSortRpc() {
         return sortRpc;
     }
@@ -69,4 +60,31 @@ public class TraceBaseInfo {
     public void setSortRpc(List<Integer> sortRpc) {
         this.sortRpc = sortRpc;
     }
+
+    public String getAgentId() {
+        return agentId;
+    }
+
+    public void setAgentId(String agentId) {
+        this.agentId = agentId;
+    }
+
+    public Long getRequestCreateTime() {
+        return requestCreateTime;
+    }
+
+    public void setRequestCreateTime(Long requestCreateTime) {
+        this.requestCreateTime = requestCreateTime;
+    }
+
+    private String traceId;
+    private String spanId;
+    private String requestUrl;
+    private Integer sort;
+    private String agentId;
+    private MethodInfo[] nodeDetail;
+    private MethodTreeDTO simpleTree;
+    private List<Integer> sortRpc;
+    private Long requestCreateTime;
+
 }

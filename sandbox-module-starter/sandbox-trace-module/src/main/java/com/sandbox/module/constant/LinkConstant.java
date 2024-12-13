@@ -5,4 +5,6 @@ public class LinkConstant {
 
     public static final String SPAN_ID = "spanId";
 
+    public static final String REQUEST_CREATE_TIME = "requestCreateTime";
+
 }
