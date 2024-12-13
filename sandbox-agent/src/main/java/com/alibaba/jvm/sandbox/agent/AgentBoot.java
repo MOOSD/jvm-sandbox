@@ -5,7 +5,6 @@ import org.springframework.boot.loader.archive.JarFileArchive;
 
 import java.io.*;
 import java.lang.instrument.Instrumentation;
-import java.lang.reflect.InvocationTargetException;
 import java.net.*;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
@@ -55,6 +54,7 @@ public class AgentBoot {
     private static final String KEY_AGENT_NAME = "agent.name";
     private static final String KEY_HOST_NAME = "host.name";
     private static final String KEY_AGENT_ENV_NAME = "agent.env.name";
+    private static final String KEY_AGENT_PROJECT_CODE_NAME = "agent.project.code";
 
     /**
      * 支持的环境变量名称
@@ -63,7 +63,8 @@ public class AgentBoot {
     private static final String HK_MODULE_TRACE_PATTERN = "MODULE_TRACE_PATTERN";
     private static final String HK_SERVER_IP_ENV_NAME = "HK_SERVER_IP";
     private static final String[] HK_AGENT_NAME_ENV_NAMES = {"HK_AGENT_NAME","SW_AGENT_NAME"};
-    private static final String HK_ENV_NAME_ENV_NAME = "HK_ENV_NAME";
+    private static final String HK_ENV_NAME = "HK_ENV_NAME";
+    private static final String HK_PROJECT_CODE = "HK_PROJECT_CODE";
 
     public static void premain(String featureString, Instrumentation inst) throws Exception {
         final File agentJar = getArchiveFileContains();
@@ -155,6 +156,9 @@ public class AgentBoot {
         // 添加环境信息
         appendNonnullFromFeatureMap(featureSB, KEY_AGENT_ENV_NAME, getEnvName(featureMap));
 
+        // 添加服务名称信息
+        appendNonnullFromFeatureMap(featureSB, KEY_AGENT_PROJECT_CODE_NAME, getProjectCode(featureMap));
+
         // 添加agentName信息
         appendNonnullFromFeatureMap(featureSB, KEY_AGENT_NAME, getAgentName(configProperties.getProperty("mf.artifact-Id")));
 
@@ -169,8 +173,12 @@ public class AgentBoot {
         return featureSB.toString();
     }
 
+    private static String getProjectCode(Map<String, String> featureMap) {
+        return getConfigFromFeatureMapAndEnv(KEY_AGENT_PROJECT_CODE_NAME, HK_PROJECT_CODE, featureMap);
+    }
+
     private static String getEnvName(Map<String, String> featureMap) {
-        return getConfigFromFeatureMapAndEnv(KEY_AGENT_ENV_NAME, HK_ENV_NAME_ENV_NAME, featureMap);
+        return getConfigFromFeatureMapAndEnv(KEY_AGENT_ENV_NAME, HK_ENV_NAME, featureMap);
     }
 
 

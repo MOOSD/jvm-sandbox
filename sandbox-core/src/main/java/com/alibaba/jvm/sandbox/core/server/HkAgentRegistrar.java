@@ -20,8 +20,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -36,6 +38,7 @@ public class HkAgentRegistrar {
 
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
+    private  ScheduledFuture<?> healthCheckFuture;
     private boolean hkServerIsAvailable = false;
 
     public HkAgentRegistrar(CoreConfigure cfg, JvmSandbox jvmSandbox) {
@@ -69,11 +72,18 @@ public class HkAgentRegistrar {
             exception = e;
             logger.info("Agent注册失败",e);
         }
-        // 出现异常或者响应失败均视作失败
-        if(exception != null || registerVO == null || Boolean.FALSE.equals(registerVO.getSuccess())){
+        // 注册异常后开启监控检查
+        if(exception != null || registerVO == null){
             serviceIsAvailable(false);
-            // 开启健康检查 or 自动注册
+            // 注册重试
             healthStatusCheck();
+            return;
+        }
+
+        if (Boolean.FALSE.equals(registerVO.getSuccess())){
+            serviceIsAvailable(false);
+            // 注册失败,不再重试
+            logger.error("注册失败，检查所用的配置信息是否正常");
             return;
         }
         serviceIsAvailable(true);
@@ -99,6 +109,7 @@ public class HkAgentRegistrar {
     private RegisterRequest getRegisterRequest() {
         RegisterRequest registerRequest = new RegisterRequest();
         registerRequest.setInstanceId(instanceId);
+        registerRequest.setProjectCode(configure.getProjectCode());
         registerRequest.setAgentName(configure.getAgentName());
         registerRequest.setArtifactId(configure.getArtifactId());
         registerRequest.setGroupId(configure.getGroupId());
@@ -139,7 +150,7 @@ public class HkAgentRegistrar {
             return ;
         }
         String healthCheckUrl = HkUtils.getUrl(configure.getHkServerIp(), configure.getHkServerPort(), ApiPathConstant.HEALTH_CHECK_URL);
-        scheduledExecutorService.scheduleAtFixedRate(() -> {
+        healthCheckFuture = scheduledExecutorService.scheduleAtFixedRate(() -> {
             Exception healthCheckException = null;
             Boolean healthCheckResult = null;
             try {
@@ -147,30 +158,49 @@ public class HkAgentRegistrar {
                 agentStatusRequest.setTimeStamp(System.currentTimeMillis());
                 agentStatusRequest.setInstanceId(instanceId);
                 healthCheckResult = HttpClientUtil.postByJson(healthCheckUrl, agentStatusRequest, Boolean.class);
-                logger.info("健康检查结果:{}",healthCheckResult);
+                logger.info("健康检查结果:{}", healthCheckResult);
             } catch (Exception e) {
                 healthCheckException = e;
                 logger.error("心跳状态推送异常:{}", e.getMessage());
             }
-            if( null == healthCheckResult || null !=  healthCheckException ){
+            // 心跳结果检查
+            if (null == healthCheckResult || null != healthCheckException) {
                 // 出现任何异常则视作鹰眼服务器不可用
                 serviceIsAvailable(false);
-            }else if(Boolean.FALSE.equals(healthCheckResult)){
+            } else if (Boolean.FALSE.equals(healthCheckResult)) {
                 // 健康检查接口返回false时才重新注册
                 try {
-                    requestRegister();
-                    // 否则视作正常响应, 根据返回值判断是否重新注册
-                    serviceIsAvailable(true);
+                    RegisterResponseVO registerResponseVO = requestRegister();
+                    if (Boolean.FALSE.equals(registerResponseVO.getSuccess())) {
+                        logger.info("注册失败");
+                        stopHealthCheck();
+                        serviceIsAvailable(false);
+                    } else {
+                        // 否则视作正常响应, 根据返回值判断是否重新注册
+                        serviceIsAvailable(true);
+                    }
                 } catch (Exception e) {
-                    logger.warn("自动注册失败",e);
+                    logger.warn("自动注册失败", e);
                 }
-            }else if(Boolean.TRUE.equals(healthCheckResult)){
+            } else if (Boolean.TRUE.equals(healthCheckResult)) {
                 // 心跳正常，服务器状态视为正常
                 serviceIsAvailable(true);
             }
 
         }, healthCheckCycle, healthCheckCycle, TimeUnit.SECONDS);
 
+    }
+
+    /**
+     * 健康检查停止
+     */
+    private void stopHealthCheck(){
+        if (Objects.isNull(healthCheckFuture)){
+            return;
+        }
+        logger.warn("健康检查停止");
+        healthCheckFuture.cancel(false);
+        healthCheckFuture = null;
     }
 
     /**

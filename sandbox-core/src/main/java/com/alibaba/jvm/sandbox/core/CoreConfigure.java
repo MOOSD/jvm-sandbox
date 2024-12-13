@@ -51,6 +51,9 @@ public class CoreConfigure {
      */
     private static final String KEY_AGENT_ENV_NAME = "agent.env.name";
 
+    // 项目名称
+    private static final String KEY_AGENT_PROJECT_CODE_NAME = "agent.project.code";
+
     /**
      * manifest文件中的内容
      */
@@ -485,6 +488,10 @@ public class CoreConfigure {
 
     public String getAgentEnvName(){
         return featureMap.get(KEY_AGENT_ENV_NAME);
+    }
+
+    public String getProjectCode(){
+        return featureMap.get(KEY_AGENT_PROJECT_CODE_NAME);
     }
 
     public String getProjectId() {
