@@ -74,8 +74,10 @@ public class MethodInfoModule implements Module, LoadCompleted {
                                 initTree(methodTree);
                                 advice.attach(methodTree); // 将方法树附加到Advice上
                             } else if(!advice.isProcessTop() && advice.getProcessTop().attachment() == null){
+                                info.setSend(true);
                                 methodTree = new MethodTree(info);
                                 initTree(methodTree);
+                                methodTree.setSend(true);
                                 advice.getProcessTop().attach(methodTree);
                             }else{
                                 // 如果是嵌套方法，继续处理
