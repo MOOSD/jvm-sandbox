@@ -62,7 +62,6 @@ public class MethodInfoModule implements Module, LoadCompleted {
                 .onWatching()
                 .withCall()
                 .onWatch(new AdviceListener() {
-
                     @Override
                     protected void before(Advice advice) throws Throwable {
                         // 获取TraceId，如果存在则处理方法信息
@@ -75,14 +74,10 @@ public class MethodInfoModule implements Module, LoadCompleted {
                                 initTree(methodTree);
                                 advice.attach(methodTree); // 将方法树附加到Advice上
                             } else if(!advice.isProcessTop() && advice.getProcessTop().attachment() == null){
-                                logger.info("顶层方法树为空");
-                                logger.info("info={}",info);
-                                logger.info("advice={}",getMethodInfo(advice.getProcessTop()));
                                 methodTree = new MethodTree(info);
                                 initTree(methodTree);
                                 advice.getProcessTop().attach(methodTree);
                             }else{
-                                logger.info("顶层info={}", info);
                                 // 如果是嵌套方法，继续处理
                                 methodTree = advice.getProcessTop().attachment();
                                 methodTree.begin(info);
