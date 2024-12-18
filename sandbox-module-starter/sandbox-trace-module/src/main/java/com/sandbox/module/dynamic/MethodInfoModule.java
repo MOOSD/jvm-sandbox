@@ -77,7 +77,6 @@ public class MethodInfoModule implements Module, LoadCompleted {
                                 info.setSend(true);
                                 methodTree = new MethodTree(info);
                                 initTree(methodTree);
-                                methodTree.setSend(true);
                                 advice.getProcessTop().attach(methodTree);
                             }else{
                                 // 如果是嵌套方法，继续处理
