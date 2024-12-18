@@ -69,10 +69,10 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         if (Objects.nonNull(TraceIdModule.getRequestTtl())) {
                             MethodInfo info = getMethodInfo(advice);
                             final MethodTree methodTree;
-                            if (advice.isProcessTop()) {
+                            if (advice.isProcessTop() && advice.getProcessTop().attachment() != null) {
                                 // 如果是最顶层方法，创建新的方法树
                                 methodTree = new MethodTree(info);
-                                initTree(advice, methodTree);
+                                initTree(methodTree);
                                 advice.attach(methodTree); // 将方法树附加到Advice上
                             } else {
                                 // 如果是嵌套方法，继续处理
@@ -89,7 +89,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
                     /**
                      * 初始化方法树的属性
                      */
-                    public void initTree(final Advice advice, MethodTree methodTree) {
+                    public void initTree(MethodTree methodTree) {
                         RequestContext reqTtl = TraceIdModule.getRequestTtl();
                         Long requestCreateTime = TraceIdModule.getCreateTime();
                         methodTree.setTraceId(reqTtl.getTraceId());

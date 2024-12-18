@@ -205,6 +205,7 @@ public class TraceIdModule implements Module, LoadCompleted {
                     @Override
                     protected void before(Advice advice) throws Throwable {
                         Object requestObj = advice.getParameterArray()[0];
+                        logger.info(requestObj.toString());
                         Object headerTraceId = getHeader(requestObj, LinkConstant.TRACE_ID);
                         Object headerSpanId = getHeader(requestObj, LinkConstant.SPAN_ID);
                         Object headerCreate = getHeader(requestObj, LinkConstant.REQUEST_CREATE_TIME);
@@ -275,6 +276,7 @@ public class TraceIdModule implements Module, LoadCompleted {
                         header(o, LinkConstant.TRACE_ID, traceIdThreadLocal.get());
                         header(o, LinkConstant.SPAN_ID, spanId);
                         header(o, createTimeThreadLocal.get());
+                        logger.info("Feign 请求头添加 traceId 和 spanId 成功");
                     }
                 });
     }
