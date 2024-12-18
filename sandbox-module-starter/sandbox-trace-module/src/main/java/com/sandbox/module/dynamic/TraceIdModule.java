@@ -91,20 +91,6 @@ public class TraceIdModule implements Module, LoadCompleted {
         return requestTtl.get();
     }
 
-//    final static TransmittableThreadLocal<MethodTree> methodTree = new TransmittableThreadLocal<>();
-//
-//    public static MethodTree getMethodTree() {
-//        return methodTree.get();
-//    }
-//    public static void addNode(MethodInfo methodInfo) {
-//        methodTree.get().begin(methodInfo);
-//    }
-//    public static void endNode(MethodInfo methodInfo) {
-//        methodTree.get().end();
-//    }
-//    public static void initMethodTree(){
-//
-//    }
 
     @Override
     public void loadCompleted() {
@@ -218,7 +204,7 @@ public class TraceIdModule implements Module, LoadCompleted {
                             RequestContext requestContext = new RequestContext((String) headerTraceId, (String) headerSpanId, (String) getHeader(requestObj, "User-Agent"), requestURI,requestMethod);
                             requestTtl.set(requestContext);
                             setAttribute(requestObj, LinkConstant.TRACE_ID, getThreadLocalValue());
-                            createTimeThreadLocal.set((Long) headerCreate);
+                            createTimeThreadLocal.set((Long) headerCreate);// 记录使用的 traceId
                         }
 
                         // 如果 traceId 为空，则生成一个新的 traceId
