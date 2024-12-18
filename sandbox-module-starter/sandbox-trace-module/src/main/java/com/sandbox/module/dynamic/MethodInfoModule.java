@@ -1,8 +1,6 @@
 package com.sandbox.module.dynamic;
 
 import cn.newgrand.ck.executor.DataProcessor;
-import cn.newgrand.ck.reporter.DataReporter;
-import cn.newgrand.ck.reporter.LogDataReporter;
 import com.alibaba.jvm.sandbox.api.Information;
 import com.alibaba.jvm.sandbox.api.LoadCompleted;
 import com.alibaba.jvm.sandbox.api.Module;
@@ -12,7 +10,7 @@ import com.alibaba.jvm.sandbox.api.listener.ext.EventWatchBuilder;
 import com.alibaba.jvm.sandbox.api.resource.AgentInfo;
 import com.alibaba.jvm.sandbox.api.resource.ConfigInfo;
 import com.alibaba.jvm.sandbox.api.resource.ModuleEventWatcher;
-import com.sandbox.module.Context.RequestContext;
+import com.sandbox.module.domain.RequestContext;
 import com.sandbox.module.node.MethodInfo;
 import com.sandbox.module.node.MethodTree;
 import com.sandbox.module.processor.TraceDataConsumer;
@@ -97,6 +95,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         methodTree.setTraceId(reqTtl.getTraceId());
                         methodTree.setSpanId(reqTtl.getSpanId());
                         methodTree.setRequestUri(reqTtl.getRequestUrl());
+                        methodTree.setRequestMethod(reqTtl.getRequestMethod());
                         methodTree.setRequestCreateTime(requestCreateTime);
                     }
 
@@ -200,13 +199,9 @@ public class MethodInfoModule implements Module, LoadCompleted {
      */
     private void initModule() {
         logger.info("动态调用链路模块加载完成！");
-
-        // 创建数据发送器
-        DataReporter dataReporter = new LogDataReporter(configInfo);
         // 创建消费者
-        TraceDataConsumer coverageDataConsumer = new TraceDataConsumer(configInfo, dataReporter, agentInfo);
+        TraceDataConsumer coverageDataConsumer = new TraceDataConsumer(configInfo, agentInfo);
         annotationSet.addAll(Arrays.asList(defaultAnnotation));
-
         // 创建数据处理器
         this.dataProcessor = new DataProcessor<>(5, 1000, coverageDataConsumer);
     }

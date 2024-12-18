@@ -26,6 +26,7 @@ public class MethodTree {
     private Long requestCreateTime;
     private Boolean send = false;
     private MethodNode current;
+    private String requestMethod;
 
     // 方法详细信息列表
     private final Map<Integer, MethodInfo> baseInfo;
@@ -34,6 +35,7 @@ public class MethodTree {
     public MethodTree(MethodInfo title) {
         this.baseInfo = new HashMap<>();
         this.root = new MethodNode(title, this.sort++);
+        this.root.markBegin();
         this.current = root;
     }
 
@@ -208,22 +210,45 @@ public class MethodTree {
         this.send = b;
     }
 
+    public String getRequestMethod() {
+        return requestMethod;
+    }
+
+    public void setRequestMethod(String requestMethod) {
+        this.requestMethod = requestMethod;
+    }
+
     // 用于回调的接口
     private interface Callback {
         void callback(int deep, boolean isLast, String prefix, MethodNode node);
     }
 
-    // 将 MethodNode 转换为 DTO（数据传输对象）
-    public MethodTreeDTO convertToDTO(MethodNode node, final MethodInfo[] methodInfoList, final Map<Integer, MethodInfo> methodInfoMap) {
-        if (node == null) {
-            return null;
+    public List<MethodTreeDTO> convertToDTO(MethodNode node,Integer sort) {
+        List<MethodTreeDTO> dtoList = new ArrayList<>(sort);
+        if (node != null) {
+            traverseAndConvert(node, dtoList);
         }
-        MethodTreeDTO dto = new MethodTreeDTO();
+        return dtoList;
+    }
+
+    private void traverseAndConvert(MethodNode node, List<MethodTreeDTO> dtoList) {
+        // 转换当前节点
+        MethodTreeDTO dto = getMethodTreeDTO(node);
+        dtoList.add(dto);
+
+        // 添加子节点的排序
+        for (MethodNode child : node.children) {
+            dto.addChild(child.getSort());
+            traverseAndConvert(child, dtoList); // 递归处理子节点
+        }
+    }
+
+    private static MethodTreeDTO getMethodTreeDTO(MethodNode node) {
         Integer sort = node.sort;
         MethodInfo methodInfo = node.data;
-        methodInfo.mergeInfo(methodInfoMap.get(sort));
         methodInfo.setSort(sort);
-        methodInfoList[sort] = methodInfo;
+
+        MethodTreeDTO dto = new MethodTreeDTO();
         dto.setDepth(node.depth);
         dto.setClizzName(methodInfo.getClassName());
         dto.setMethodName(methodInfo.getMethodName());
@@ -231,48 +256,10 @@ public class MethodTree {
         dto.setEndTimestamp(node.endTimestamp);
         dto.setSort(sort);
         dto.setMethodCell(node.methodCells);
-
-        // 使用迭代法代替递归法，适用于大树结构
-        Deque<MethodNode> stack = new ArrayDeque<>();
-        Deque<MethodTreeDTO> dtoStack = new ArrayDeque<>();
-        stack.push(node);
-        dtoStack.push(dto);
-
-        // 迭代遍历树结构
-        while (!stack.isEmpty()) {
-            MethodNode current = stack.pop();
-            MethodTreeDTO currentDTO = dtoStack.pop();
-
-            // 避免 ConcurrentModificationException：将 children 复制到新集合中
-            if (!current.children.isEmpty()) {
-                List<MethodTreeDTO> children = new ArrayList<>(current.children.size());
-                List<MethodNode> childNodes = new ArrayList<>(current.children);
-
-                for (MethodNode child : childNodes) {
-                    Integer childSort = child.sort;
-                    MethodInfo childInfo = child.data;
-                    childInfo.mergeInfo(methodInfoMap.get(childSort));
-                    childInfo.setSort(childSort);
-                    methodInfoList[childSort] = childInfo;
-
-                    MethodTreeDTO childDTO = new MethodTreeDTO();
-                    childDTO.setClizzName(childInfo.getClassName());
-                    childDTO.setMethodName(childInfo.getMethodName());
-                    childDTO.setBeginTimestamp(child.beginTimestamp);
-                    childDTO.setEndTimestamp(child.endTimestamp);
-                    childDTO.setDepth(child.depth);
-                    childDTO.setSort(childSort);
-                    childDTO.setMethodCell(child.methodCells);
-                    children.add(childDTO);
-                    stack.push(child);
-                    dtoStack.push(childDTO);
-                }
-                currentDTO.setChildren(children);
-            }
-        }
-
+        dto.setParentSort(node.parent != null ? node.parent.data.getSort() : -1);
         return dto;
     }
+
 
     // 获取当前节点的字符串表示
     public String getCurrentMethodNodeStr() {

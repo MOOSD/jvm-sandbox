@@ -1,4 +1,4 @@
-package com.sandbox.module.Context;
+package com.sandbox.module.domain;
 
 public class RequestContext {
 
@@ -11,7 +11,9 @@ public class RequestContext {
 
     private int sort;
 
-    public RequestContext(String traceId, String spanId, String message, String requestUrl) {
+    private String requestMethod;
+
+    public RequestContext(String traceId, String spanId, String message, String requestUrl,String requestMethod) {
         this.traceId = traceId;
         this.requestUrl = requestUrl;
         if(spanId != null){
@@ -20,6 +22,7 @@ public class RequestContext {
             this.spanId = "root";
         }
         this.message = message;
+        this.requestMethod = requestMethod;
     }
 
     public String getTraceId() {
@@ -69,5 +72,13 @@ public class RequestContext {
 
     public void setSort(int sort) {
         this.sort = sort;
+    }
+
+    public String getRequestMethod() {
+        return requestMethod;
+    }
+
+    public void setRequestMethod(String requestMethod) {
+        this.requestMethod = requestMethod;
     }
 }
