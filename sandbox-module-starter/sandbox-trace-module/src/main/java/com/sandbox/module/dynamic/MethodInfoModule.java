@@ -78,6 +78,9 @@ public class MethodInfoModule implements Module, LoadCompleted {
                                 methodTree = new MethodTree(info);
                                 initTree(methodTree);
                                 advice.getProcessTop().attach(methodTree);
+                                logger.info("info: {}", info);
+                                logger.info("advice:{}", advice);
+                                logger.info("advice tree{}",advice.getProcessTop().attachment() instanceof MethodTree);
                             }else{
                                 // 如果是嵌套方法，继续处理
                                 methodTree = advice.getProcessTop().attachment();
