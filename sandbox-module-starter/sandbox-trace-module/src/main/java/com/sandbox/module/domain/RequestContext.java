@@ -9,7 +9,6 @@ public class RequestContext {
 
     private String requestUrl;
 
-    private int sort;
 
     private String requestMethod;
 
@@ -66,13 +65,6 @@ public class RequestContext {
         this.requestUrl = requestUrl;
     }
 
-    public int getSort() {
-        return sort;
-    }
-
-    public void setSort(int sort) {
-        this.sort = sort;
-    }
 
     public String getRequestMethod() {
         return requestMethod;

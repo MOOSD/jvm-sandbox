@@ -7,6 +7,7 @@ import com.alibaba.jvm.sandbox.api.listener.ext.Advice;
 import com.alibaba.jvm.sandbox.api.listener.ext.AdviceListener;
 import com.alibaba.jvm.sandbox.api.listener.ext.EventWatchBuilder;
 import com.alibaba.jvm.sandbox.api.resource.ModuleEventWatcher;
+import com.alibaba.jvm.sandbox.api.tools.JSON;
 import com.alibaba.ttl.TransmittableThreadLocal;
 import com.sandbox.module.domain.RequestContext;
 import com.sandbox.module.constant.LinkConstant;
@@ -191,13 +192,12 @@ public class TraceIdModule implements Module, LoadCompleted {
                     @Override
                     protected void before(Advice advice) throws Throwable {
                         Object requestObj = advice.getParameterArray()[0];
-                        logger.info(requestObj.toString());
                         Object headerTraceId = getHeader(requestObj, LinkConstant.TRACE_ID);
                         Object headerSpanId = getHeader(requestObj, LinkConstant.SPAN_ID);
                         Object headerCreate = getHeader(requestObj, LinkConstant.REQUEST_CREATE_TIME);
                         String requestURI = (String) Objects.requireNonNull(getMethod(requestObj, "getRequestURI")).invoke(requestObj);
-                        //获取请求方式
                         String requestMethod = (String) Objects.requireNonNull(getMethod(requestObj, "getMethod")).invoke(requestObj);
+                        logger.info(JSON.toJSONString(requestObj));
                         // 如果请求中包含 traceId，则将其保存到线程局部变量中
                         if (headerTraceId != null) {
                             traceIdThreadLocal.set((String) headerTraceId);
