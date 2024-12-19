@@ -76,7 +76,6 @@ public class TraceDataConsumer implements DataConsumer<MethodTree> {
     }
 
     private void tryReport(String json){
-        logger.info("链路数据{}",json);
         dataReporter.report(json);
         //
     }
