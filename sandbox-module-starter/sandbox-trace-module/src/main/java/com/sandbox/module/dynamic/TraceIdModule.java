@@ -195,9 +195,9 @@ public class TraceIdModule implements Module, LoadCompleted {
                         Object headerTraceId = getHeader(requestObj, LinkConstant.TRACE_ID);
                         Object headerSpanId = getHeader(requestObj, LinkConstant.SPAN_ID);
                         Object headerCreate = getHeader(requestObj, LinkConstant.REQUEST_CREATE_TIME);
+                        logger.info("traceId: {} is String {};\ncreate:{} is Long {}", headerTraceId,headerTraceId instanceof String,headerCreate,headerCreate instanceof Long);  // 记录使用的 traceId
                         String requestURI = (String) Objects.requireNonNull(getMethod(requestObj, "getRequestURI")).invoke(requestObj);
                         String requestMethod = (String) Objects.requireNonNull(getMethod(requestObj, "getMethod")).invoke(requestObj);
-                        logger.info(JSON.toJSONString(requestObj));
                         // 如果请求中包含 traceId，则将其保存到线程局部变量中
                         if (headerTraceId != null) {
                             traceIdThreadLocal.set((String) headerTraceId);
