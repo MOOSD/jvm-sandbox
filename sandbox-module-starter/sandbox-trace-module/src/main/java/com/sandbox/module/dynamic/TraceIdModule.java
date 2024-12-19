@@ -148,7 +148,6 @@ public class TraceIdModule implements Module, LoadCompleted {
                             traceIdThreadLocal.set((String) headerTraceId);
                             RequestContext requestContext = new RequestContext((String) headerTraceId, (String) headerSpan, (String) getHeader(headers, "User-Agent"), requestURI,requestMethod);
                             requestTtl.set(requestContext);
-                            setAttribute(headers, LinkConstant.TRACE_ID, getThreadLocalValue());
                             createTimeThreadLocal.set((Long) headerTime);
                             logger.info("Using existing traceId: {}", headerTraceId);  // 记录使用的 traceId
                         }
@@ -195,6 +194,7 @@ public class TraceIdModule implements Module, LoadCompleted {
                         Object headerTraceId = getHeader(requestObj, LinkConstant.TRACE_ID);
                         Object headerSpanId = getHeader(requestObj, LinkConstant.SPAN_ID);
                         Object headerCreate = getHeader(requestObj, LinkConstant.REQUEST_CREATE_TIME);
+
                         logger.info("traceId: {} is String {};\ncreate:{} is Long {}", headerTraceId,headerTraceId instanceof String,headerCreate,headerCreate instanceof Long);  // 记录使用的 traceId
                         String requestURI = (String) Objects.requireNonNull(getMethod(requestObj, "getRequestURI")).invoke(requestObj);
                         String requestMethod = (String) Objects.requireNonNull(getMethod(requestObj, "getMethod")).invoke(requestObj);
@@ -203,8 +203,8 @@ public class TraceIdModule implements Module, LoadCompleted {
                             traceIdThreadLocal.set((String) headerTraceId);
                             RequestContext requestContext = new RequestContext((String) headerTraceId, (String) headerSpanId, (String) getHeader(requestObj, "User-Agent"), requestURI,requestMethod);
                             requestTtl.set(requestContext);
-                            setAttribute(requestObj, LinkConstant.TRACE_ID, getThreadLocalValue());
-                            createTimeThreadLocal.set((Long) headerCreate);// 记录使用的 traceId
+                            headerCreate = Long.parseLong((String) headerCreate);
+                            createTimeThreadLocal.set((Long) headerCreate);
                         }
 
                         // 如果 traceId 为空，则生成一个新的 traceId
@@ -261,8 +261,8 @@ public class TraceIdModule implements Module, LoadCompleted {
                         sortList.get().add(sort);
                         header(o, LinkConstant.TRACE_ID, traceIdThreadLocal.get());
                         header(o, LinkConstant.SPAN_ID, spanId);
-                        header(o, createTimeThreadLocal.get());
-                        logger.info("Feign 请求头添加 traceId 和 spanId 成功");
+                        header(o, LinkConstant.REQUEST_CREATE_TIME, createTimeThreadLocal.get().toString());
+                        logger.info("feign request traceId: {}, spanId: {} , create: {}", traceIdThreadLocal.get(), spanId , createTimeThreadLocal.get());
                     }
                 });
     }
@@ -272,15 +272,6 @@ public class TraceIdModule implements Module, LoadCompleted {
         try {
             Method header = obj.getClass().getMethod("header", String.class, String[].class);
             header.invoke(obj, name, values);
-        } catch (Exception ignored) {
-        }
-    }
-
-    // 设置请求头的时间字段
-    private void header(Object obj, Long... values) {
-        try {
-            Method header = obj.getClass().getMethod("header", String.class, Long[].class);
-            header.invoke(obj, LinkConstant.REQUEST_CREATE_TIME, values);
         } catch (Exception ignored) {
         }
     }
