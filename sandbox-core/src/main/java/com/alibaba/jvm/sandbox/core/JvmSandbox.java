@@ -6,6 +6,7 @@ import com.alibaba.jvm.sandbox.core.manager.impl.DefaultCoreLoadedClassDataSourc
 import com.alibaba.jvm.sandbox.core.manager.impl.DefaultCoreModuleManager;
 import com.alibaba.jvm.sandbox.core.manager.impl.DefaultProviderManager;
 import com.alibaba.jvm.sandbox.core.manager.impl.CoreAgentInfo;
+import com.alibaba.jvm.sandbox.core.util.IdGenerator;
 import com.alibaba.jvm.sandbox.core.util.SandboxProtector;
 import com.alibaba.jvm.sandbox.core.util.SpyUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -82,7 +83,7 @@ public class JvmSandbox implements HKServerObserver {
     public JvmSandbox(final CoreConfigure cfg,
                       final Instrumentation inst) {
         this.cfg = cfg;
-        this.instanceId = UUID.randomUUID().toString();
+        this.instanceId = genInstanceId();
         this.coreAgentInfo = new CoreAgentInfo();
         // 是否支持Native方法增强
         cfg.setNativeSupported(isNativeSupported(inst));
@@ -103,6 +104,9 @@ public class JvmSandbox implements HKServerObserver {
         SpyUtils.init(cfg.getNamespace());
     }
 
+    private String genInstanceId(){
+        return IdGenerator.genId(cfg.getHostName(), cfg.getGitRemoteUrl(), cfg.getGitBranch(), cfg.getGitCommitId());
+    }
     /**
      * 提前加载某些必要的类
      */
