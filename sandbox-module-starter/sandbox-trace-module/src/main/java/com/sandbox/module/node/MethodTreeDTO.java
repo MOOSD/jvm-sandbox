@@ -19,14 +19,13 @@ public class MethodTreeDTO {
         this.depth = depth;
     }
 
+    private Integer parentSort;
     private Integer depth;
     private Integer sort;
     private long beginTimestamp;
     private long endTimestamp;
     private List<String> methodCell = new LinkedList<>();
-    private List<MethodTreeDTO> children = new ArrayList<>();
-
-
+    private List<Integer> childrenSort = new ArrayList<>();
 
     public long getBeginTimestamp() {
         return beginTimestamp;
@@ -44,12 +43,12 @@ public class MethodTreeDTO {
         this.endTimestamp = endTimestamp;
     }
 
-    public List<MethodTreeDTO> getChildren() {
-        return children;
+    public List<Integer> getChildrenSort() {
+        return childrenSort;
     }
 
-    public void setChildren(List<MethodTreeDTO> children) {
-        this.children = children;
+    public void setChildren(List<Integer> children) {
+        this.childrenSort = children;
     }
 
     public Integer getSort() {
@@ -79,8 +78,23 @@ public class MethodTreeDTO {
     public List<String> getMethodCell() {
         return methodCell;
     }
+    public MethodTreeDTO(){
+        this.childrenSort = new ArrayList<>();
+    }
 
     public void setMethodCell(List<String> methodCell) {
         this.methodCell = methodCell;
+    }
+
+    public Integer getParentSort() {
+        return parentSort;
+    }
+
+    public void setParentSort(Integer parentSort) {
+        this.parentSort = parentSort;
+    }
+
+    public void addChild(Integer child) {
+        this.childrenSort.add(child);
     }
 }

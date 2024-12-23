@@ -46,11 +46,11 @@ public class TraceBaseInfo {
         this.nodeDetail = nodeDetail;
     }
 
-    public MethodTreeDTO getSimpleTree() {
+    public List<MethodTreeDTO> getSimpleTree() {
         return simpleTree;
     }
 
-    public void setSimpleTree(MethodTreeDTO simpleTree) {
+    public void setSimpleTree(List<MethodTreeDTO> simpleTree) {
         this.simpleTree = simpleTree;
     }
     public List<Integer> getSortRpc() {
@@ -83,8 +83,16 @@ public class TraceBaseInfo {
     private Integer sort;
     private String agentId;
     private MethodInfo[] nodeDetail;
-    private MethodTreeDTO simpleTree;
+    private List<MethodTreeDTO> simpleTree;
     private List<Integer> sortRpc;
     private Long requestCreateTime;
+    private String requestMethod;
 
+    public String getRequestMethod() {
+        return requestMethod;
+    }
+
+    public void setRequestMethod(String requestMethod) {
+        this.requestMethod = requestMethod;
+    }
 }

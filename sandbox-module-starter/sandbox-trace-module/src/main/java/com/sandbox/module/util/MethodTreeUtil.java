@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sandbox.module.node.MethodTreeDTO;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author nicc
@@ -50,60 +47,14 @@ public class MethodTreeUtil {
 
 
     // 合并相邻层级服务上调用链路
-    public void mergeMethods(List<MethodTreeDTO> methodTreeDTOsA, List<MethodTreeDTO> methodTreeDTOsB){
-
-        for (MethodTreeDTO rootB : methodTreeDTOsB) {
-            for (MethodTreeDTO rootA : methodTreeDTOsA) {
-                List<MethodTreeDTO> targetNodes = getNodeByMethodName(rootA, rootB.getMethodName());
-                for (MethodTreeDTO targetNode : targetNodes) {
-                    if(targetNode.getBeginTimestamp() <= rootB.getBeginTimestamp() &&
-                            targetNode.getEndTimestamp() >= rootB.getEndTimestamp()){
-                        targetNode.getChildren().add(rootB);
-                    }
-                }
-            }
-        }
-    }
-
-
-    // 获取指定方法名节点
-    public List<MethodTreeDTO> getNodeByMethodName(MethodTreeDTO root, String methodName) {
-        List<MethodTreeDTO> nodes = new ArrayList<>();
-        findByMethodName(root, nodes, methodName);
-        return nodes;
-    }
-
-    // 递归查找叶子节点
-    private void findByMethodName(MethodTreeDTO node, List<MethodTreeDTO> nodes, String methodName) {
-        if(node.getMethodName().equals(methodName)){
-            nodes.add(node);
-            return;
-        }
-        for (MethodTreeDTO child : node.getChildren()) {
-            findByMethodName(child, nodes, methodName);
-        }
-    }
 
 
 
 
-        // 获取所有叶子节点
-    public List<MethodTreeDTO> getLeafNodes(MethodTreeDTO root) {
-        List<MethodTreeDTO> leafNodes = new ArrayList<>();
-        findLeafNodes(root, leafNodes);
-        return leafNodes;
-    }
 
-    // 递归查找叶子节点
-    private void findLeafNodes(MethodTreeDTO node, List<MethodTreeDTO> leafNodes) {
-        if (node.getChildren() == null || node.getChildren().isEmpty()) {
-            leafNodes.add(node);
-            return;
-        }
-        for (MethodTreeDTO child : node.getChildren()) {
-            findLeafNodes(child, leafNodes);
-        }
-    }
+
+
+
 
 
 

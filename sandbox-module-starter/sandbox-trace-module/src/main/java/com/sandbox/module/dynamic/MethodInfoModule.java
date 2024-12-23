@@ -1,8 +1,6 @@
 package com.sandbox.module.dynamic;
 
 import cn.newgrand.ck.executor.DataProcessor;
-import cn.newgrand.ck.reporter.DataReporter;
-import cn.newgrand.ck.reporter.LogDataReporter;
 import com.alibaba.jvm.sandbox.api.Information;
 import com.alibaba.jvm.sandbox.api.LoadCompleted;
 import com.alibaba.jvm.sandbox.api.Module;
@@ -12,7 +10,7 @@ import com.alibaba.jvm.sandbox.api.listener.ext.EventWatchBuilder;
 import com.alibaba.jvm.sandbox.api.resource.AgentInfo;
 import com.alibaba.jvm.sandbox.api.resource.ConfigInfo;
 import com.alibaba.jvm.sandbox.api.resource.ModuleEventWatcher;
-import com.sandbox.module.Context.RequestContext;
+import com.sandbox.module.domain.RequestContext;
 import com.sandbox.module.node.MethodInfo;
 import com.sandbox.module.node.MethodTree;
 import com.sandbox.module.processor.TraceDataConsumer;
@@ -64,7 +62,6 @@ public class MethodInfoModule implements Module, LoadCompleted {
                 .onWatching()
                 .withCall()
                 .onWatch(new AdviceListener() {
-
                     @Override
                     protected void before(Advice advice) throws Throwable {
                         // 获取TraceId，如果存在则处理方法信息
@@ -74,9 +71,17 @@ public class MethodInfoModule implements Module, LoadCompleted {
                             if (advice.isProcessTop()) {
                                 // 如果是最顶层方法，创建新的方法树
                                 methodTree = new MethodTree(info);
-                                initTree(advice, methodTree);
+                                initTree(methodTree);
                                 advice.attach(methodTree); // 将方法树附加到Advice上
-                            } else {
+                            } else if(!advice.isProcessTop() && advice.getProcessTop().attachment() == null){
+                                info.setSend(true);
+                                methodTree = new MethodTree(info);
+                                initTree(methodTree);
+                                advice.getProcessTop().attach(methodTree);
+                                logger.info("info: {}", info);
+                                logger.info("advice:{}", advice);
+                                logger.info("advice tree{}",advice.getProcessTop().attachment() instanceof MethodTree);
+                            }else{
                                 // 如果是嵌套方法，继续处理
                                 methodTree = advice.getProcessTop().attachment();
                                 methodTree.begin(info);
@@ -91,12 +96,13 @@ public class MethodInfoModule implements Module, LoadCompleted {
                     /**
                      * 初始化方法树的属性
                      */
-                    public void initTree(final Advice advice, MethodTree methodTree) {
+                    public void initTree(MethodTree methodTree) {
                         RequestContext reqTtl = TraceIdModule.getRequestTtl();
                         Long requestCreateTime = TraceIdModule.getCreateTime();
                         methodTree.setTraceId(reqTtl.getTraceId());
                         methodTree.setSpanId(reqTtl.getSpanId());
                         methodTree.setRequestUri(reqTtl.getRequestUrl());
+                        methodTree.setRequestMethod(reqTtl.getRequestMethod());
                         methodTree.setRequestCreateTime(requestCreateTime);
                     }
 
@@ -200,13 +206,9 @@ public class MethodInfoModule implements Module, LoadCompleted {
      */
     private void initModule() {
         logger.info("动态调用链路模块加载完成！");
-
-        // 创建数据发送器
-        DataReporter dataReporter = new LogDataReporter(configInfo);
         // 创建消费者
-        TraceDataConsumer coverageDataConsumer = new TraceDataConsumer(configInfo, dataReporter, agentInfo);
+        TraceDataConsumer coverageDataConsumer = new TraceDataConsumer(configInfo, agentInfo);
         annotationSet.addAll(Arrays.asList(defaultAnnotation));
-
         // 创建数据处理器
         this.dataProcessor = new DataProcessor<>(5, 1000, coverageDataConsumer);
     }
