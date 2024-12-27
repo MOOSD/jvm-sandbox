@@ -181,7 +181,7 @@ public class TraceIdModule implements Module, LoadCompleted {
                         Integer sort = r.getSort();
                         String spanId = r.getSpanId() + "->" + sort;
                         r.addSortRpc(sort);
-                        header(o, LinkConstant.TRACE_ID, r.getSpanId());
+                        header(o, LinkConstant.TRACE_ID, r.getTraceId());
                         header(o, LinkConstant.SPAN_ID, spanId);
                         header(o, LinkConstant.REQUEST_CREATE_TIME, r.getRequestCreateTime().toString());
                     }
