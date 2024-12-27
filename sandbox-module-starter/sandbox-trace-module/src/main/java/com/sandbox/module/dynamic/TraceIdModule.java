@@ -95,7 +95,7 @@ public class TraceIdModule implements Module, LoadCompleted {
                             logger.info("Generated new traceId: {}", uuid);  // 记录生成的 traceId
                         } else {
                             // 如果 traceId 存在，设置当前线程的 traceId 和其他信息
-                            RequestContext requestContext = new RequestContext((String) headerTraceId, (String) headerSpan, (String) getHeader(headers, "User-Agent"), requestURI,requestMethod, (Long) headerTime);
+                            RequestContext requestContext = new RequestContext((String) headerTraceId, (String) headerSpan, (String) getHeader(headers, "User-Agent"), requestURI,requestMethod, Long.parseLong((String) headerTime));
                             requestTtl.set(requestContext);
                             logger.info("Using existing traceId: {}", headerTraceId);  // 记录使用的 traceId
                         }
@@ -138,7 +138,7 @@ public class TraceIdModule implements Module, LoadCompleted {
                         String requestURI = (String) Objects.requireNonNull(getMethod(requestObj, "getRequestURI")).invoke(requestObj);
                         String requestMethod = (String) Objects.requireNonNull(getMethod(requestObj, "getMethod")).invoke(requestObj);
                         if (headerTraceId != null) {
-                            RequestContext requestContext = new RequestContext((String) headerTraceId, (String) headerSpanId, (String) getHeader(requestObj, "User-Agent"), requestURI,requestMethod,(Long) headerCreate);
+                            RequestContext requestContext = new RequestContext((String) headerTraceId, (String) headerSpanId, (String) getHeader(requestObj, "User-Agent"), requestURI,requestMethod,Long.parseLong((String) headerCreate));
                             requestTtl.set(requestContext);
                         }
                         else  {
@@ -179,7 +179,7 @@ public class TraceIdModule implements Module, LoadCompleted {
                         Object o = advice.getParameterArray()[0];
                         RequestContext r = requestTtl.get();
                         Integer sort = r.getSort();
-                        String spanId = requestTtl.get().getSpanId() + "->" + sort;
+                        String spanId = r.getSpanId() + "->" + sort;
                         r.addSortRpc(sort);
                         header(o, LinkConstant.TRACE_ID, r.getSpanId());
                         header(o, LinkConstant.SPAN_ID, spanId);

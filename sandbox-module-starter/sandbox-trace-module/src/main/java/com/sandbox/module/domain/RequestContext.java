@@ -30,11 +30,6 @@ public class RequestContext {
         this.sortRpc = new ArrayList<>();
         this.requestCreateTime = requestCreateTime;
     }
-
-    // sort增加
-    public void addSort(){
-        this.sort++;
-    }
     // sortRpc增加
     public void addSortRpc(Integer sort){
         this.sortRpc.add(sort);
