@@ -77,8 +77,6 @@ public class TraceIdModule implements Module, LoadCompleted {
                         Object headerSpan = get.invoke(headers, LinkConstant.SPAN_ID);
                         Object headerTime = get.invoke(headers, LinkConstant.REQUEST_CREATE_TIME);
 
-                        // 获取请求 URI
-                        String requestURI = (String) Objects.requireNonNull(getMethod(headers, "getRequestURI")).invoke(headers);
                         String requestUrl = (String) Objects.requireNonNull(getMethod(serverHttpRequest, "getURI")).invoke(serverHttpRequest);
                         String requestMethod = (String) Objects.requireNonNull(getMethod(serverHttpRequest, "getMethodValue")).invoke(serverHttpRequest);
                         // 如果 traceId 不存在，则生成一个新的 traceId 并设置到请求头
@@ -95,7 +93,7 @@ public class TraceIdModule implements Module, LoadCompleted {
                             logger.info("Generated new traceId: {}", uuid);  // 记录生成的 traceId
                         } else {
                             // 如果 traceId 存在，设置当前线程的 traceId 和其他信息
-                            RequestContext requestContext = new RequestContext((String) headerTraceId, (String) headerSpan, (String) getHeader(headers, "User-Agent"), requestURI,requestMethod, Long.parseLong((String) headerTime));
+                            RequestContext requestContext = new RequestContext((String) headerTraceId, (String) headerSpan, (String) getHeader(headers, "User-Agent"), requestUrl,requestMethod, Long.parseLong((String) headerTime));
                             requestTtl.set(requestContext);
                             logger.info("Using existing traceId: {}", headerTraceId);  // 记录使用的 traceId
                         }
