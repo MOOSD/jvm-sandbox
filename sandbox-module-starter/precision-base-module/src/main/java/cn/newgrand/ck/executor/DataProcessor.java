@@ -110,7 +110,8 @@ public class DataProcessor<T> {
                 }
                 catch (Error error) {
                     log.error("!数据消费错误!", error);
-                    throw error;
+                    // 终止消费
+                    break;
                 }
             }
             log.warn("线程 {} 消费停止 ",Thread.currentThread().getName());
