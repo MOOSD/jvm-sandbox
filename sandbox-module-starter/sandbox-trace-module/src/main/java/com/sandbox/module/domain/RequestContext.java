@@ -1,18 +1,22 @@
 package com.sandbox.module.domain;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class RequestContext {
 
     private String traceId;
-
     private String spanId;
     private String message;
-
     private String requestUrl;
-
-
     private String requestMethod;
 
-    public RequestContext(String traceId, String spanId, String message, String requestUrl,String requestMethod) {
+    // 链路数据内部通信属性
+    private Integer sort;
+    private List<Integer> sortRpc;
+    private Long requestCreateTime;
+
+    public RequestContext(String traceId, String spanId, String message, String requestUrl,String requestMethod,long requestCreateTime) {
         this.traceId = traceId;
         this.requestUrl = requestUrl;
         if(spanId != null){
@@ -22,6 +26,13 @@ public class RequestContext {
         }
         this.message = message;
         this.requestMethod = requestMethod;
+        this.sort = 0;
+        this.sortRpc = new ArrayList<>();
+        this.requestCreateTime = requestCreateTime;
+    }
+    // sortRpc增加
+    public void addSortRpc(Integer sort){
+        this.sortRpc.add(sort);
     }
 
     public String getTraceId() {
@@ -48,6 +59,7 @@ public class RequestContext {
         this.message = message;
     }
 
+
     @Override
     public String toString() {
         return "RequestContext{" +
@@ -72,5 +84,29 @@ public class RequestContext {
 
     public void setRequestMethod(String requestMethod) {
         this.requestMethod = requestMethod;
+    }
+
+    public Integer getSort() {
+        return sort;
+    }
+
+    public void setSort(Integer sort) {
+        this.sort = sort;
+    }
+
+    public List<Integer> getSortRpc() {
+        return sortRpc;
+    }
+
+    public void setSortRpc(List<Integer> sortRpc) {
+        this.sortRpc = sortRpc;
+    }
+
+    public Long getRequestCreateTime() {
+        return requestCreateTime;
+    }
+
+    public void setRequestCreateTime(Long requestCreateTime) {
+        this.requestCreateTime = requestCreateTime;
     }
 }

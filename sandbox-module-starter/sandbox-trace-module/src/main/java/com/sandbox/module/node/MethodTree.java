@@ -78,8 +78,8 @@ public class MethodTree {
 
     // 创建一个新的分支节点
     public MethodTree begin(MethodInfo data) {
+        TraceIdModule.getRequestTtl().setSort(this.sort);
         current = new MethodNode(current, data, this.sort++);
-        TraceIdModule.setSort(this.sort);
         current.markBegin();
         return this;
     }
@@ -239,7 +239,7 @@ public class MethodTree {
         // 添加子节点的排序
         for (MethodNode child : node.children) {
             dto.addChild(child.getSort());
-            traverseAndConvert(child, dtoList); // 递归处理子节点
+            traverseAndConvert(child, dtoList);
         }
     }
 

@@ -78,9 +78,6 @@ public class MethodInfoModule implements Module, LoadCompleted {
                                 methodTree = new MethodTree(info);
                                 initTree(methodTree);
                                 advice.getProcessTop().attach(methodTree);
-                                logger.info("info: {}", info);
-                                logger.info("advice:{}", advice);
-                                logger.info("advice tree{}",advice.getProcessTop().attachment() instanceof MethodTree);
                             }else{
                                 // 如果是嵌套方法，继续处理
                                 methodTree = advice.getProcessTop().attachment();
@@ -98,7 +95,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
                      */
                     public void initTree(MethodTree methodTree) {
                         RequestContext reqTtl = TraceIdModule.getRequestTtl();
-                        Long requestCreateTime = TraceIdModule.getCreateTime();
+                        Long requestCreateTime = reqTtl.getRequestCreateTime();
                         methodTree.setTraceId(reqTtl.getTraceId());
                         methodTree.setSpanId(reqTtl.getSpanId());
                         methodTree.setRequestUri(reqTtl.getRequestUrl());
@@ -116,7 +113,6 @@ public class MethodInfoModule implements Module, LoadCompleted {
                                 Objects.nonNull(advice.getBehavior()) ? advice.getBehavior().getDeclaringClass().getName() : null;
                         methodInfo.setClassName(className);
                         methodInfo.setMethodName(methodName);
-
                         // 获取方法的注解信息
                         if (advice.getBehavior() != null && advice.getBehavior().getAnnotations() != null && advice.getBehavior().getAnnotations().length > 0) {
                             Annotation[] annotations = advice.getBehavior().getAnnotations();
@@ -157,7 +153,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
                         if (Objects.nonNull(TraceIdModule.getRequestTtl())) {
                             final MethodTree methodTree = advice.getProcessTop().attachment();
                             if (methodTree.getBegin() && methodTree.getCurrentData().getSend()) {
-                                methodTree.setSortRpc(TraceIdModule.getSortList());
+                                methodTree.setSortRpc(TraceIdModule.getRequestTtl().getSortRpc());
                                 methodTree.setSend(true);
                                 // 添加数据到处理器
                                 dataProcessor.add(advice.getProcessTop().attachment());
@@ -176,7 +172,7 @@ public class MethodInfoModule implements Module, LoadCompleted {
                                 methodTree.addBaseInfo(methodInfo);
                             }
                             if (methodTree.getBegin() && methodTree.getCurrentData().getSend()) {
-                                methodTree.setSortRpc(TraceIdModule.getSortList());
+                                methodTree.setSortRpc(TraceIdModule.getRequestTtl().getSortRpc());
                                 methodTree.setSend(true);
                                 dataProcessor.add(advice.getProcessTop().attachment());
                             }

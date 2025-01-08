@@ -37,55 +37,8 @@ public class TraceIdModule implements Module, LoadCompleted {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    // 用于保存当前请求的顺序信息
-    final static TransmittableThreadLocal<Integer> sortTtl = new TransmittableThreadLocal<Integer>() {
-        @Override
-        protected Integer initialValue() {
-            return 0;
-        }
-    };
-
-    // 获取当前请求的顺序
-    public static Integer getSort() {
-        return sortTtl.get();
-    }
-
-    // 设置当前请求的顺序
-    public static void setSort(int sort) {
-        sortTtl.set(sort);
-    }
-
-    // 用于保存当前请求的顺序列表
-    final static TransmittableThreadLocal<List<Integer>> sortList = new TransmittableThreadLocal<List<Integer>>() {
-        @Override
-        protected List<Integer> initialValue() {
-            return new ArrayList<>();
-        }
-    };
-
-    // 获取当前请求的顺序列表
-    public static List<Integer> getSortList() {
-        return sortList.get();
-    }
-
-    // 保存 traceId 到当前线程
-    final static TransmittableThreadLocal<String> traceIdThreadLocal = new TransmittableThreadLocal<>();
-
-    // 保存创建时间到当前线程
-    final static TransmittableThreadLocal<Long> createTimeThreadLocal = new TransmittableThreadLocal<>();
-
     // 保存请求上下文到当前线程
     final static TransmittableThreadLocal<RequestContext> requestTtl = new TransmittableThreadLocal<>();
-
-    // 获取当前线程的 traceId
-    public static String getThreadLocalValue() {
-        return traceIdThreadLocal.get();
-    }
-
-    // 获取请求的创建时间
-    public static Long getCreateTime() {
-        return createTimeThreadLocal.get();
-    }
 
     // 获取请求上下文
     public static RequestContext getRequestTtl() {
@@ -124,18 +77,13 @@ public class TraceIdModule implements Module, LoadCompleted {
                         Object headerSpan = get.invoke(headers, LinkConstant.SPAN_ID);
                         Object headerTime = get.invoke(headers, LinkConstant.REQUEST_CREATE_TIME);
 
-                        // 获取请求 URI
-                        String requestURI = (String) Objects.requireNonNull(getMethod(headers, "getRequestURI")).invoke(headers);
                         String requestUrl = (String) Objects.requireNonNull(getMethod(serverHttpRequest, "getURI")).invoke(serverHttpRequest);
                         String requestMethod = (String) Objects.requireNonNull(getMethod(serverHttpRequest, "getMethodValue")).invoke(serverHttpRequest);
                         // 如果 traceId 不存在，则生成一个新的 traceId 并设置到请求头
                         if (Objects.isNull(headerTraceId)) {
                             String uuid = UUID.randomUUID().toString();
-                            RequestContext requestContext = new RequestContext(uuid, null, "(String) agent", requestUrl,requestMethod);
-                            traceIdThreadLocal.set(uuid);
+                            RequestContext requestContext = new RequestContext(uuid, null, "(String) agent", requestUrl,requestMethod, System.currentTimeMillis());
                             requestTtl.set(requestContext);
-                            createTimeThreadLocal.set(System.currentTimeMillis());
-
                             // 修改请求头，将 traceId 添加到请求头中
                             Method mutate = serverHttpRequestClazz.getMethod("mutate");
                             Object builder = mutate.invoke(serverHttpRequest);
@@ -145,10 +93,8 @@ public class TraceIdModule implements Module, LoadCompleted {
                             logger.info("Generated new traceId: {}", uuid);  // 记录生成的 traceId
                         } else {
                             // 如果 traceId 存在，设置当前线程的 traceId 和其他信息
-                            traceIdThreadLocal.set((String) headerTraceId);
-                            RequestContext requestContext = new RequestContext((String) headerTraceId, (String) headerSpan, (String) getHeader(headers, "User-Agent"), requestURI,requestMethod);
+                            RequestContext requestContext = new RequestContext((String) headerTraceId, (String) headerSpan, (String) getHeader(headers, "User-Agent"), requestUrl,requestMethod, Long.parseLong((String) headerTime));
                             requestTtl.set(requestContext);
-                            createTimeThreadLocal.set((Long) headerTime);
                             logger.info("Using existing traceId: {}", headerTraceId);  // 记录使用的 traceId
                         }
                     }
@@ -159,11 +105,7 @@ public class TraceIdModule implements Module, LoadCompleted {
                             return;
                         }
                         // 清理线程局部变量，防止内存泄漏
-                        traceIdThreadLocal.remove();
                         requestTtl.remove();
-                        sortTtl.remove();
-                        sortList.remove();
-                        createTimeThreadLocal.remove();
                     }
 
                     @Override
@@ -171,12 +113,7 @@ public class TraceIdModule implements Module, LoadCompleted {
                         if (!advice.isProcessTop()) {
                             return;
                         }
-                        // 清理线程局部变量
-                        traceIdThreadLocal.remove();
                         requestTtl.remove();
-                        sortTtl.remove();
-                        sortList.remove();
-                        createTimeThreadLocal.remove();
                     }
                 });
 
@@ -198,22 +135,14 @@ public class TraceIdModule implements Module, LoadCompleted {
                         logger.info("traceId: {} is String {};\ncreate:{} is Long {}", headerTraceId,headerTraceId instanceof String,headerCreate,headerCreate instanceof Long);  // 记录使用的 traceId
                         String requestURI = (String) Objects.requireNonNull(getMethod(requestObj, "getRequestURI")).invoke(requestObj);
                         String requestMethod = (String) Objects.requireNonNull(getMethod(requestObj, "getMethod")).invoke(requestObj);
-                        // 如果请求中包含 traceId，则将其保存到线程局部变量中
                         if (headerTraceId != null) {
-                            traceIdThreadLocal.set((String) headerTraceId);
-                            RequestContext requestContext = new RequestContext((String) headerTraceId, (String) headerSpanId, (String) getHeader(requestObj, "User-Agent"), requestURI,requestMethod);
+                            RequestContext requestContext = new RequestContext((String) headerTraceId, (String) headerSpanId, (String) getHeader(requestObj, "User-Agent"), requestURI,requestMethod,Long.parseLong((String) headerCreate));
                             requestTtl.set(requestContext);
-                            headerCreate = Long.parseLong((String) headerCreate);
-                            createTimeThreadLocal.set((Long) headerCreate);
                         }
-
-                        // 如果 traceId 为空，则生成一个新的 traceId
-                        if (traceIdThreadLocal.get() == null) {
+                        else  {
                             String uuid = UUID.randomUUID().toString();
-                            RequestContext requestContext = new RequestContext(uuid, null, (String) getHeader(requestObj, "User-Agent"), requestURI,requestMethod);
-                            traceIdThreadLocal.set(uuid);
+                            RequestContext requestContext = new RequestContext(uuid, null, (String) getHeader(requestObj, "User-Agent"), requestURI,requestMethod,System.currentTimeMillis());
                             requestTtl.set(requestContext);
-                            createTimeThreadLocal.set(System.currentTimeMillis());
                         }
                     }
 
@@ -222,12 +151,7 @@ public class TraceIdModule implements Module, LoadCompleted {
                         if (!advice.isProcessTop()) {
                             return;
                         }
-                        // 清理线程局部变量
-                        traceIdThreadLocal.remove();
                         requestTtl.remove();
-                        sortTtl.remove();
-                        sortList.remove();
-                        createTimeThreadLocal.remove();
                     }
 
                     @Override
@@ -235,12 +159,7 @@ public class TraceIdModule implements Module, LoadCompleted {
                         if (!advice.isProcessTop()) {
                             return;
                         }
-                        // 清理线程局部变量
-                        traceIdThreadLocal.remove();
                         requestTtl.remove();
-                        sortTtl.remove();
-                        sortList.remove();
-                        createTimeThreadLocal.remove();
                     }
                 });
 
@@ -256,13 +175,13 @@ public class TraceIdModule implements Module, LoadCompleted {
                     @Override
                     protected void before(Advice advice) throws Throwable {
                         Object o = advice.getParameterArray()[0];
-                        Integer sort = sortTtl.get();
-                        String spanId = requestTtl.get().getSpanId() + "->" + sort;
-                        sortList.get().add(sort);
-                        header(o, LinkConstant.TRACE_ID, traceIdThreadLocal.get());
+                        RequestContext r = requestTtl.get();
+                        Integer sort = r.getSort();
+                        String spanId = r.getSpanId() + "->" + sort;
+                        r.addSortRpc(sort);
+                        header(o, LinkConstant.TRACE_ID, r.getTraceId());
                         header(o, LinkConstant.SPAN_ID, spanId);
-                        header(o, LinkConstant.REQUEST_CREATE_TIME, createTimeThreadLocal.get().toString());
-                        logger.info("feign request traceId: {}, spanId: {} , create: {}", traceIdThreadLocal.get(), spanId , createTimeThreadLocal.get());
+                        header(o, LinkConstant.REQUEST_CREATE_TIME, r.getRequestCreateTime().toString());
                     }
                 });
     }
@@ -292,16 +211,6 @@ public class TraceIdModule implements Module, LoadCompleted {
             return obj.getClass().getMethod(methodName);
         } catch (NoSuchMethodException e) {
             return null;
-        }
-    }
-
-    // 设置属性到请求中
-    private void setAttribute(Object obj, String attributeName, Object attributeValue) {
-        try {
-            Method setAttributeMethod = obj.getClass().getMethod("setAttribute", String.class, Object.class);
-            setAttributeMethod.invoke(obj, attributeName, attributeValue);
-        } catch (Exception e) {
-            // Handle exception
         }
     }
 }
