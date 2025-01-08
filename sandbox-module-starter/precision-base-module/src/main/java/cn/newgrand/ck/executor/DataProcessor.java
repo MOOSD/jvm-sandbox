@@ -105,8 +105,12 @@ public class DataProcessor<T> {
                         consumer.consume(data);
                         consumerDataCounter.incrementAndGet();
                     }
-                } catch (Throwable exception) {
+                } catch (Exception exception){
                     log.error("数据消费异常", exception);
+                }
+                catch (Error error) {
+                    log.error("!数据消费错误!", error);
+                    throw error;
                 }
             }
             log.warn("线程 {} 消费停止 ",Thread.currentThread().getName());
