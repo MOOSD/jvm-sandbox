@@ -45,7 +45,7 @@ public class TraceDataConsumer implements DataConsumer<MethodTree> {
         writeLock = reentrantReadWriteLock.writeLock();
         String coverageUrl = HkUtils.getUrl(configInfo.getHkServerIp(), configInfo.getHkServerPort(),
                 ApiPathConstant.TRACE_REPORT_URL);
-        this.dataReporter = new LogReporter(new HttpReporter(coverageUrl));;
+        this.dataReporter = new HttpReporter(coverageUrl);
     }
 
     @Override
