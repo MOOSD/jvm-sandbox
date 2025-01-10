@@ -4,6 +4,7 @@ import com.alibaba.jvm.sandbox.core.CoreConfigure;
 import com.alibaba.jvm.sandbox.core.JvmSandbox;
 import com.alibaba.jvm.sandbox.core.server.CoreServer;
 import com.alibaba.jvm.sandbox.core.server.HkAgentRegistrar;
+import com.alibaba.jvm.sandbox.core.server.jetty.servlet.MetricsServlet;
 import com.alibaba.jvm.sandbox.core.server.jetty.servlet.ModuleHttpServlet;
 import com.alibaba.jvm.sandbox.core.server.jetty.servlet.WebSocketAcceptorServlet;
 import com.alibaba.jvm.sandbox.core.util.Initializer;
@@ -120,16 +121,17 @@ public class JettyCoreServer implements CoreServer {
      * 初始化Jetty's ContextHandler
      */
     private void initJettyContextHandler() {
-        final String namespace = cfg.getNamespace();
-        final ServletContextHandler context = new ServletContextHandler(NO_SESSIONS);
 
-        final String contextPath = "/sandbox/" + namespace;
-        context.setContextPath(contextPath);
+        final ServletContextHandler context = new ServletContextHandler(NO_SESSIONS);
+        // 取消contextPath的配置，以及路径中对命名空间的需求
+        //final String contextPath = "/sandbox/" + namespace;
+        //context.setContextPath(contextPath);
+        final String contextPath = "/sandbox";
         context.setClassLoader(getClass().getClassLoader());
 
         // web-socket-servlet
-        final String wsPathSpec = "/module/websocket/*";
-        logger.info("initializing ws-http-handler. path={}", contextPath + wsPathSpec);
+        final String wsPathSpec = contextPath +"/module/websocket/*";
+        logger.info("initializing ws-http-handler. path={}", wsPathSpec);
         //noinspection deprecation
         context.addServlet(
                 new ServletHolder(new WebSocketAcceptorServlet(jvmSandbox.getCoreModuleManager())),
@@ -137,13 +139,17 @@ public class JettyCoreServer implements CoreServer {
         );
 
         // module-http-servlet
-        final String pathSpec = "/module/http/*";
-        logger.info("initializing http-handler. path={}", contextPath + pathSpec);
+        final String pathSpec = contextPath + "/module/http/*";
+        logger.info("initializing http-handler. path={}", pathSpec);
         context.addServlet(
                 new ServletHolder(new ModuleHttpServlet(cfg, jvmSandbox.getCoreModuleManager())),
                 pathSpec
         );
 
+        final String metricsPathSpec = "/metrics";
+        logger.info("initializing metrics-http-handler");
+        context.addServlet(new ServletHolder(new MetricsServlet(cfg, jvmSandbox.getCoreModuleManager()))
+                , metricsPathSpec);
         httpServer.setHandler(context);
     }
 
@@ -177,7 +183,7 @@ public class JettyCoreServer implements CoreServer {
         try {
             initializer.initProcess(() -> {
                 LogbackUtils.init(cfg.getNamespace(), cfg.getLogBackPath());
-                logger.info("initializing server. cfg={}", cfg);
+                logger.info("initializing server. cfg = {}", cfg);
                 jvmSandbox = new JvmSandbox(cfg, inst);
                 initHttpServer();
                 initJettyContextHandler();
