@@ -46,7 +46,9 @@ public class CoverageDataConsumer implements DataConsumer<MethodCoverage> {
     @Override
     public void consume(MethodCoverage data) {
         logger.debug("数据消费:{}", data.toString());
-        if (data.getCoverageLine().isEmpty()){
+        // todo 为什么方法名拿不到？暂时忽略为null的方法名
+        if (data.getCoverageLine().isEmpty() || "null".equals(data.getClassName())){
+            logger.warn("数据消费异常:{}",data);
             return;
         }
         // 获取类覆盖率
