@@ -3,17 +3,16 @@ package cn.newgrand.ck.pojo;
 import cn.newgrand.ck.entity.request.BaseCoverageDateReportRequest;
 
 import java.util.Collection;
-import java.util.Set;
 
 public class CoverageDateReportRequest extends BaseCoverageDateReportRequest {
 
-    protected Collection<ClassCoverage> classCoverageCollection;
+    protected Collection<ClassCoverage> classCoverageDataCollection;
 
-    public Collection<ClassCoverage> getClassCoverageCollection() {
-        return classCoverageCollection;
+    public Collection<ClassCoverage> getClassCoverageDataCollection() {
+        return classCoverageDataCollection;
     }
 
-    public void setClassCoverageCollection(Collection<ClassCoverage> classCoverageCollection) {
-        this.classCoverageCollection = classCoverageCollection;
+    public void setClassCoverageDataCollection(Collection<ClassCoverage> classCoverageDataCollection) {
+        this.classCoverageDataCollection = classCoverageDataCollection;
     }
 }

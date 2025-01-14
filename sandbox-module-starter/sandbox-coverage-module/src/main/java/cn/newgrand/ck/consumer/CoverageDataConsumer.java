@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
@@ -87,7 +86,7 @@ public class CoverageDataConsumer implements DataConsumer<MethodCoverage> {
             if (sendClassCoverage.size() > 5) {
                 CoverageDateReportRequest coverageDateReportRequest = new CoverageDateReportRequest();
                 coverageDateReportRequest.setInstanceId(agentInfo.getInstanceId());
-                coverageDateReportRequest.setClassCoverageCollection(sendClassCoverage.values());
+                coverageDateReportRequest.setClassCoverageDataCollection(sendClassCoverage.values());
                 sendJson = JSON.toJSONString(coverageDateReportRequest);
                 sendClassCoverage.clear();
             }
@@ -108,7 +107,7 @@ public class CoverageDataConsumer implements DataConsumer<MethodCoverage> {
         CoverageDateReportRequest coverageDateReportRequest = new CoverageDateReportRequest();
         coverageDateReportRequest.setInstanceId(agentInfo.getInstanceId());
         // 发送信息
-        coverageDateReportRequest.setClassCoverageCollection(sendClassCoverage.values());
+        coverageDateReportRequest.setClassCoverageDataCollection(sendClassCoverage.values());
         String jsonString = JSON.toJSONString(coverageDateReportRequest);
         sendClassCoverage.clear();
         dataReporter.report(jsonString);
