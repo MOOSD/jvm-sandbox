@@ -191,25 +191,6 @@ public class MethodInfoModule implements Module, LoadCompleted {
                                 }
                                 methodTree.setOutData(objectMapper.writeValueAsString(advice.getReturnObj()));
                                 // 添加数据到处理器
-                                MethodTree data = methodTree;
-                                TraceBaseInfo traceBaseInfo = new TraceBaseInfo();
-                                traceBaseInfo.setAgentId(agentInfo.getInstanceId());
-                                traceBaseInfo.setRequestCreateTime(data.getRequestCreateTime());
-                                traceBaseInfo.setTraceId(data.getTraceId());
-                                traceBaseInfo.setOutData(data.getOutData());
-                                traceBaseInfo.setIntoData(data.getIntoData());
-                                traceBaseInfo.setErrorData(data.getErrorData());
-                                traceBaseInfo.setSpanId(data.getSpanId());
-                                traceBaseInfo.setRequestUrl(data.getRequestUri());
-                                traceBaseInfo.setSort(data.getSort());
-                                traceBaseInfo.setSortRpc(data.getSortRpc());
-                                traceBaseInfo.setRequestMethod(data.getRequestMethod());
-                                traceBaseInfo.setClazzApiPath(data.getClazzApiPath());
-                                traceBaseInfo.setMethodApiPath(data.getMethodApiPath());
-                                traceBaseInfo.setSimpleTree(data.convertToDTO(data.getCurrent(),data.getSort()));
-                                ObjectMapper objectMapper = new ObjectMapper();
-                                String json = objectMapper.writeValueAsString(traceBaseInfo);
-                                logger.info("traceId: {}, traceBaseInfo: {}", data.getTraceId(), json);
                                 dataProcessor.add(advice.getProcessTop().attachment());
                             }
                             methodTree.end();
