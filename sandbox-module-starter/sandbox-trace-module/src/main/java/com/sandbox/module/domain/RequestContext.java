@@ -10,6 +10,8 @@ public class RequestContext {
     private String message;
     private String requestUrl;
     private String requestMethod;
+    private String[] clazzApiPath;
+    private String[] methodApiPath;
 
     // 链路数据内部通信属性
     private Integer sort;
@@ -108,5 +110,21 @@ public class RequestContext {
 
     public void setRequestCreateTime(Long requestCreateTime) {
         this.requestCreateTime = requestCreateTime;
+    }
+
+    public String[] getClazzApiPath() {
+        return clazzApiPath;
+    }
+
+    public void setClazzApiPath(String[] classApiPath) {
+        this.clazzApiPath = classApiPath;
+    }
+
+    public String[] getMethodApiPath() {
+        return methodApiPath;
+    }
+
+    public void setMethodApiPath(String[] methodApiPath) {
+        this.methodApiPath = methodApiPath;
     }
 }

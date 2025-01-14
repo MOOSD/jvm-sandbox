@@ -18,6 +18,10 @@ public class MethodTree {
     // 微服务外调id
     private List<Integer> sortRpc;
 
+    private String intoData = "";
+    private String outData = "";
+    private String errorData = "";
+
     // 树的基础信息
     private String traceId;
     private String spanId;
@@ -27,6 +31,8 @@ public class MethodTree {
     private Boolean send = false;
     private MethodNode current;
     private String requestMethod;
+    private String[] clazzApiPath;
+    private String[] methodApiPath;
 
     // 方法详细信息列表
     private final Map<Integer, MethodInfo> baseInfo;
@@ -218,6 +224,46 @@ public class MethodTree {
         this.requestMethod = requestMethod;
     }
 
+    public String[] getClazzApiPath() {
+        return clazzApiPath;
+    }
+
+    public void setClazzApiPath(String[] clazzApiPath) {
+        this.clazzApiPath = clazzApiPath;
+    }
+
+    public String[] getMethodApiPath() {
+        return methodApiPath;
+    }
+
+    public void setMethodApiPath(String[] methodApiPath) {
+        this.methodApiPath = methodApiPath;
+    }
+
+    public void setIntoData(String intoData) {
+        this.intoData = intoData;
+    }
+
+    public String getIntoData() {
+        return intoData;
+    }
+
+    public String getOutData() {
+        return outData;
+    }
+
+    public void setOutData(String outData) {
+        this.outData = outData;
+    }
+
+    public String getErrorData() {
+        return errorData;
+    }
+
+    public void setErrorData(String errorData) {
+        this.errorData = errorData;
+    }
+
     // 用于回调的接口
     private interface Callback {
         void callback(int deep, boolean isLast, String prefix, MethodNode node);
@@ -235,7 +281,6 @@ public class MethodTree {
         // 转换当前节点
         MethodTreeDTO dto = getMethodTreeDTO(node);
         dtoList.add(dto);
-
         // 添加子节点的排序
         for (MethodNode child : node.children) {
             dto.addChild(child.getSort());
@@ -247,14 +292,17 @@ public class MethodTree {
         Integer sort = node.sort;
         MethodInfo methodInfo = node.data;
         methodInfo.setSort(sort);
-
         MethodTreeDTO dto = new MethodTreeDTO();
         dto.setDepth(node.depth);
+        dto.setBehavior(methodInfo.getBehavior());
+        dto.setReturnType(methodInfo.getReturnType());
+        dto.setTarget(methodInfo.getTarget());
         dto.setClizzName(methodInfo.getClassName());
         dto.setMethodName(methodInfo.getMethodName());
         dto.setBeginTimestamp(node.beginTimestamp);
         dto.setEndTimestamp(node.endTimestamp);
         dto.setSort(sort);
+        dto.setParams(methodInfo.getParams());
         dto.setMethodCell(node.methodCells);
         dto.setParentSort(node.parent != null ? node.parent.data.getSort() : -1);
         return dto;

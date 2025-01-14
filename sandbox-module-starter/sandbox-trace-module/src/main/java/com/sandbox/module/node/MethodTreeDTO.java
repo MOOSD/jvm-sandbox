@@ -19,6 +19,11 @@ public class MethodTreeDTO {
         this.depth = depth;
     }
 
+    private String behavior;
+    private String target;
+    private String returnType;
+
+    private String[] params;
     private Integer parentSort;
     private Integer depth;
     private Integer sort;
@@ -96,5 +101,37 @@ public class MethodTreeDTO {
 
     public void addChild(Integer child) {
         this.childrenSort.add(child);
+    }
+
+    public String getBehavior() {
+        return behavior;
+    }
+
+    public void setBehavior(String behavior) {
+        this.behavior = behavior;
+    }
+
+    public String getTarget() {
+        return target;
+    }
+
+    public void setTarget(String target) {
+        this.target = target;
+    }
+
+    public String getReturnType() {
+        return returnType;
+    }
+
+    public void setReturnType(String returnType) {
+        this.returnType = returnType;
+    }
+
+    public String[] getParams() {
+        return params;
+    }
+
+    public void setParams(String[] params) {
+        this.params = params;
     }
 }

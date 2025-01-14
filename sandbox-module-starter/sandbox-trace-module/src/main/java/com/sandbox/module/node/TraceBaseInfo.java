@@ -80,6 +80,9 @@ public class TraceBaseInfo {
     private String traceId;
     private String spanId;
     private String requestUrl;
+    private String intoData;
+    private String outData;
+    private String errorData;
     private Integer sort;
     private String agentId;
     private MethodInfo[] nodeDetail;
@@ -87,12 +90,53 @@ public class TraceBaseInfo {
     private List<Integer> sortRpc;
     private Long requestCreateTime;
     private String requestMethod;
-
+    private String[] clazzApiPath;
+    private String[] methodApiPath;
     public String getRequestMethod() {
         return requestMethod;
     }
 
     public void setRequestMethod(String requestMethod) {
         this.requestMethod = requestMethod;
+    }
+
+    public String[] getClazzApiPath() {
+        return clazzApiPath;
+    }
+
+    public void setClazzApiPath(String[] clazzApiPath) {
+        this.clazzApiPath = clazzApiPath;
+    }
+
+    public String[] getMethodApiPath() {
+        return methodApiPath;
+    }
+
+    public void setMethodApiPath(String[] methodApiPath) {
+        this.methodApiPath = methodApiPath;
+    }
+
+    public String getIntoData() {
+        return intoData;
+    }
+
+    public void setIntoData(String intoData) {
+        this.intoData = intoData;
+    }
+
+    public String getOutData() {
+        return outData;
+    }
+
+    public void setOutData(String outData) {
+        this.outData = outData;
+    }
+
+    public String getErrorData() {
+        return errorData;
+    }
+
+    public void setErrorData(String errorData) {
+        this.errorData = errorData;
     }
 }

@@ -45,6 +45,10 @@ public class TraceIdModule implements Module, LoadCompleted {
         return requestTtl.get();
     }
 
+    public static void removeRequestTtl() {
+        requestTtl.remove();
+    }
+
 
     @Override
     public void loadCompleted() {

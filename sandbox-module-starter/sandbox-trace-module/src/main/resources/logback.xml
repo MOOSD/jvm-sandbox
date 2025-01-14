@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <configuration scan="true" scanPeriod="10000">
 
-    <property name="SERVER_NAME" value="${agent_server_definition_name:- }" />
+    <property name="SERVER_NAME" value="${agent_server_definition_name:-default}" />
     <!-- DEBUG模块：Servlet监控日志 -->
     <appender name="FILE_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${user.home}/logs/sandbox/precision/${SERVER_NAME}trace.log</file>
+        <file>${user.home}/logs/sandbox/${SERVER_NAME}/precision/trace.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>${user.home}/logs/sandbox/precision/${SERVER_NAME}trace.log.%d{yyyy-MM-dd}</FileNamePattern>
+            <FileNamePattern>${user.home}/logs/sandbox/${SERVER_NAME}/precision/trace.log.%d{yyyy-MM-dd}</FileNamePattern>
             <MaxHistory>30</MaxHistory>
         </rollingPolicy>
         <encoder>

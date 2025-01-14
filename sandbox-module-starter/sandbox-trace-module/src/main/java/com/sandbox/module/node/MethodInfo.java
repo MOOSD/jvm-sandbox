@@ -9,6 +9,9 @@ public class MethodInfo {
     private String methodName;
     private String[] annotations;
     private Integer sort;
+    private String behavior;
+    private String target;
+    private String returnType;
 
     private String log;
 
@@ -48,20 +51,6 @@ public class MethodInfo {
 
     public void setData(String data){
         this.data = data;
-    }
-
-
-    @Override
-    public String toString() {
-        return "MethodInfo{" +
-                "className='" + className + '\'' +
-                ", methodName='" + methodName + '\'' +
-                ", sort=" + sort + '\'' +
-                ", log='" + log + '\'' +
-                ", data='" + data + '\'' +
-                ", params='" + Arrays.toString(params) + '\'' +
-                ", annotation=" + Arrays.toString(annotations) +
-                '}';
     }
 
     public String[] getParams() {
@@ -110,5 +99,29 @@ public class MethodInfo {
 
     public void setSort(Integer sort) {
         this.sort = sort;
+    }
+
+    public String getBehavior() {
+        return behavior;
+    }
+
+    public void setBehavior(String behavior) {
+        this.behavior = behavior;
+    }
+
+    public String getTarget() {
+        return target;
+    }
+
+    public void setTarget(String target) {
+        this.target = target;
+    }
+
+    public String getReturnType() {
+        return returnType;
+    }
+
+    public void setReturnType(String returnType) {
+        this.returnType = returnType;
     }
 }

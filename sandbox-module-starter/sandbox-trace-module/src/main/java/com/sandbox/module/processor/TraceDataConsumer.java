@@ -22,6 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+/**
+ * @author qq
+ */
 public class TraceDataConsumer implements DataConsumer<MethodTree> {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -57,11 +60,16 @@ public class TraceDataConsumer implements DataConsumer<MethodTree> {
             traceBaseInfo.setAgentId(agentInfo.getInstanceId());
             traceBaseInfo.setRequestCreateTime(data.getRequestCreateTime());
             traceBaseInfo.setTraceId(data.getTraceId());
+            traceBaseInfo.setOutData(data.getOutData());
+            traceBaseInfo.setIntoData(data.getIntoData());
+            traceBaseInfo.setErrorData(data.getErrorData());
             traceBaseInfo.setSpanId(data.getSpanId());
             traceBaseInfo.setRequestUrl(data.getRequestUri());
             traceBaseInfo.setSort(data.getSort());
             traceBaseInfo.setSortRpc(data.getSortRpc());
             traceBaseInfo.setRequestMethod(data.getRequestMethod());
+            traceBaseInfo.setClazzApiPath(data.getClazzApiPath());
+            traceBaseInfo.setMethodApiPath(data.getMethodApiPath());
             traceBaseInfo.setSimpleTree(data.convertToDTO(data.getCurrent(),data.getSort()));
             String json = objectMapper.writeValueAsString(traceBaseInfo);
             tryReport(json);

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <configuration scan="true" scanPeriod="10000">
-    <property name="SERVER_NAME" value="${agent_server_definition_name:- }" />
+    <property name="SERVER_NAME" value="${agent_server_definition_name:-default}" />
 
     <!-- DEBUG模块：Exception监控日志 -->
     <logger name="DEBUG-EXCEPTION-LOGGER" level="INFO">
         <appender class="ch.qos.logback.core.rolling.RollingFileAppender">
-            <file>${user.home}/logs/sandbox/debug/${SERVER_NAME}exception-monitor.log</file>
+            <file>${user.home}/logs/sandbox/${SERVER_NAME}/debug/exception-monitor.log</file>
             <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-                <FileNamePattern>${user.home}/logs/sandbox/debug/${SERVER_NAME}exception-monitor.log.%d{yyyy-MM-dd}</FileNamePattern>
+                <FileNamePattern>${user.home}/logs/sandbox/${SERVER_NAME}/debug/exception-monitor.log.%d{yyyy-MM-dd}</FileNamePattern>
                 <MaxHistory>30</MaxHistory>
             </rollingPolicy>
             <encoder>
