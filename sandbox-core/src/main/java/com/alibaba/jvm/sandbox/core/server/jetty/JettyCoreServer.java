@@ -145,7 +145,7 @@ public class JettyCoreServer implements CoreServer {
                 new ServletHolder(new ModuleHttpServlet(cfg, jvmSandbox.getCoreModuleManager())),
                 pathSpec
         );
-
+        // todo 根据是否暴漏有ip，选择性的注册指标 servlet
         final String metricsPathSpec = "/metrics";
         logger.info("initializing metrics-http-handler");
         context.addServlet(new ServletHolder(new MetricsServlet(cfg, jvmSandbox.getCoreModuleManager()))

@@ -7,20 +7,17 @@ import com.alibaba.jvm.sandbox.api.listener.ext.Advice;
 import com.alibaba.jvm.sandbox.api.listener.ext.AdviceListener;
 import com.alibaba.jvm.sandbox.api.listener.ext.EventWatchBuilder;
 import com.alibaba.jvm.sandbox.api.resource.ModuleEventWatcher;
-import com.alibaba.jvm.sandbox.api.tools.JSON;
+import com.alibaba.jvm.sandbox.api.util.MetricsUtils;
 import com.alibaba.ttl.TransmittableThreadLocal;
 import com.sandbox.module.domain.RequestContext;
 import com.sandbox.module.constant.LinkConstant;
-import com.sandbox.module.node.MethodInfo;
-import com.sandbox.module.node.MethodTree;
 import org.kohsuke.MetaInfServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -131,6 +128,7 @@ public class TraceIdModule implements Module, LoadCompleted {
 
                     @Override
                     protected void before(Advice advice) throws Throwable {
+                        HttpInRecord(advice);
                         Object requestObj = advice.getParameterArray()[0];
                         Object headerTraceId = getHeader(requestObj, LinkConstant.TRACE_ID);
                         Object headerSpanId = getHeader(requestObj, LinkConstant.SPAN_ID);
@@ -152,6 +150,7 @@ public class TraceIdModule implements Module, LoadCompleted {
 
                     @Override
                     protected void afterReturning(Advice advice) {
+                        HttpOutRecord(advice);
                         if (!advice.isProcessTop()) {
                             return;
                         }
@@ -160,6 +159,7 @@ public class TraceIdModule implements Module, LoadCompleted {
 
                     @Override
                     protected void afterThrowing(Advice advice) {
+                        HttpOutRecord(advice);
                         if (!advice.isProcessTop()) {
                             return;
                         }
@@ -215,6 +215,29 @@ public class TraceIdModule implements Module, LoadCompleted {
             return obj.getClass().getMethod(methodName);
         } catch (NoSuchMethodException e) {
             return null;
+        }
+    }
+
+    private void HttpInRecord(Advice advice){
+        // 添加
+        advice.attach(System.currentTimeMillis());
+    }
+
+    private void HttpOutRecord(Advice advice){
+        // 记录接口执行时间
+        Long startTime = advice.attachment();
+        MetricsUtils.httpTimeRecord(System.currentTimeMillis() - startTime);
+
+        // 获取响应码 ,todo 架构会封装异常信息，使报文响应为200，需要针对特定的响应报文结构进行编码
+        Object response = advice.getParameterArray()[1];
+        try {
+            Method getStatusMethod = response.getClass().getMethod("getStatus");
+            Object status = getStatusMethod.invoke(response);
+            MetricsUtils.httpCounterIncrement(String.valueOf(status));
+
+        } catch (Exception e) {
+            MetricsUtils.httpCounterIncrement();
+            logger.error("DispatcherServlet 方法调用失败",e);
         }
     }
 }
