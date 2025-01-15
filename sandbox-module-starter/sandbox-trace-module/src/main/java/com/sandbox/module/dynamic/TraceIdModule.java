@@ -60,6 +60,7 @@ public class TraceIdModule implements Module, LoadCompleted {
 
                     @Override
                     protected void before(Advice advice) throws Throwable {
+                        HttpInRecord(advice);
                         // 获取 ServerWebExchange 对象
                         Object serverWebExchange = advice.getParameterArray()[0];
                         // 通过反射获取 getRequest 方法并获取请求对象
@@ -102,6 +103,7 @@ public class TraceIdModule implements Module, LoadCompleted {
 
                     @Override
                     protected void afterReturning(Advice advice) {
+                        HttpOutRecord(advice);
                         if (!advice.isProcessTop()) {
                             return;
                         }
@@ -111,6 +113,7 @@ public class TraceIdModule implements Module, LoadCompleted {
 
                     @Override
                     protected void afterThrowing(Advice advice) {
+                        HttpOutRecord(advice);
                         if (!advice.isProcessTop()) {
                             return;
                         }
