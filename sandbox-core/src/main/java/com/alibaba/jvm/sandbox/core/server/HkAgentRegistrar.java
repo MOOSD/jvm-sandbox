@@ -122,6 +122,7 @@ public class HkAgentRegistrar {
         registerRequest.setHealthCheckCycle(configure.getHkHealthCheckCycle());
         registerRequest.setHostName(configure.getHostName());
         registerRequest.setJvmInfo(getJVMInfo());
+        registerRequest.setServerIp(configure.getServerIp());
         return registerRequest;
     }
 

@@ -146,9 +146,8 @@ public class AgentBoot {
         ));
         // 将服务端ip信息添加进去
         appendNonnullFromFeatureMap(featureSB, KEY_HK_SERVER_IP, getHkServerIp(featureMap));
-
         // 将自身的ip信息添加进去
-        appendNonnullFromFeatureMap(featureSB, KEY_SERVER_IP,  getSelfIp(featureMap));
+        appendNonnullFromFeatureMap(featureSB, KEY_SERVER_IP,  getServerIp(featureMap));
 
         // 将自身的端口信息添加进去
         appendNonnullFromFeatureMap(featureSB, KEY_SERVER_PORT, featureMap.get(KEY_SERVER_PORT));
@@ -239,6 +238,51 @@ public class AgentBoot {
 
         return null;
     }
+    private static String getConfigFromFeatureMapAndEnvOrUtil(String configKey, String envName,  Map<String, String> featureMap){
+        String configValue = getConfigFromFeatureMapAndEnv(configKey, envName, featureMap);
+        if(StringUtils.isNotBlankString(configValue)){
+            return configValue;
+        }else{
+            try {
+                Enumeration<NetworkInterface> nics = NetworkInterface.getNetworkInterfaces();
+                InetAddress selectedAddress = null;
+                int minIndex = Integer.MAX_VALUE;
+
+                // 遍历所有网络接口
+                while (nics.hasMoreElements()) {
+                    NetworkInterface networkInterface = nics.nextElement();
+                    // 如果接口是活动的
+                    if (networkInterface.isUp()) {
+                        Enumeration<InetAddress> addrs = networkInterface.getInetAddresses();
+
+                        // 遍历该接口的所有 IP 地址
+                        while (addrs.hasMoreElements()) {
+                            InetAddress address = addrs.nextElement();
+
+                            // 如果地址是 IPv4 且不是环回地址
+                            if (address instanceof Inet4Address && !address.isLoopbackAddress()) {
+                                // 选择索引最小的非环回地址
+                                if (networkInterface.getIndex() < minIndex) {
+                                    minIndex = networkInterface.getIndex();
+                                    selectedAddress = address;
+                                }
+                            }
+                        }
+                    }
+                }
+                // 如果找到了符合条件的地址，返回该地址
+                if (selectedAddress != null) {
+                    return selectedAddress.getHostAddress();
+                }
+            } catch (SocketException e) {
+                e.printStackTrace();
+            }
+
+
+            return null;
+        }
+    }
+
 
     private static String getSelfIp(Map<String, String> featureMap) {
 
@@ -270,6 +314,10 @@ public class AgentBoot {
 
     private static String getHkServerIp(Map<String, String> featureMap){
         return getConfigFromFeatureMapAndEnv(KEY_HK_SERVER_IP,HK_SERVER_IP_ENV_NAME, featureMap);
+    }
+
+    private static String getServerIp(Map<String, String> featureMap){
+        return getConfigFromFeatureMapAndEnvOrUtil(KEY_SERVER_IP, HK_SERVER_IP_ENV_NAME, featureMap);
     }
 
     private static String getLogConfigFilePath(File agentJar) throws IOException {
