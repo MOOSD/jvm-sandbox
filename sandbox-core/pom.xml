@@ -86,11 +86,6 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-registry-prometheus</artifactId>
-            <version>1.13.9</version>
-        </dependency>
 
         <dependency>
             <groupId>com.sun</groupId>
