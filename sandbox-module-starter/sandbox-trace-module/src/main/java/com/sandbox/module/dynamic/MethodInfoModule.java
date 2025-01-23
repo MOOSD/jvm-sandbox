@@ -12,6 +12,7 @@ import com.alibaba.jvm.sandbox.api.resource.ConfigInfo;
 import com.alibaba.jvm.sandbox.api.resource.ModuleEventWatcher;
 import com.alibaba.jvm.sandbox.api.tools.JSON;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.sandbox.module.domain.RequestContext;
 import com.sandbox.module.node.MethodInfo;
 import com.sandbox.module.node.MethodTree;
@@ -54,7 +55,9 @@ public class MethodInfoModule implements Module, LoadCompleted {
 
     private static final Integer SORT_SIZE = 5000;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .enable(SerializationFeature.INDENT_OUTPUT)
+            .enable(SerializationFeature.FAIL_ON_SELF_REFERENCES);
 
     /**
      * 模块加载完成后的初始化工作
@@ -77,9 +80,15 @@ public class MethodInfoModule implements Module, LoadCompleted {
                             final MethodTree methodTree;
                             MethodInfo info = initInfo(advice);
                             if (advice.isProcessTop()) {
+                                String json;
+                                try{
+                                    json = objectMapper.writeValueAsString(advice.getParameterArray());
+                                }catch (Exception e){
+                                    json = e.getMessage();
+                                }
                                 // 如果是最顶层方法，创建新的方法树
                                 methodTree = new MethodTree(getMethodInfo(advice, info));
-                                initTree(methodTree , objectMapper.writeValueAsString(advice.getParameterArray()));
+                                initTree(methodTree , json);
                                 advice.attach(methodTree); // 将方法树附加到Advice上
                             }else {
                                 // 如果是嵌套方法，继续处理
@@ -189,7 +198,13 @@ public class MethodInfoModule implements Module, LoadCompleted {
                                     methodTree.setClazzApiPath(rtl.getClazzApiPath());
                                     methodTree.setMethodApiPath(rtl.getMethodApiPath());
                                 }
-                                methodTree.setOutData(objectMapper.writeValueAsString(advice.getReturnObj()));
+                                String json;
+                                try{
+                                    json = objectMapper.writeValueAsString(advice.getReturnObj());
+                                }catch (Exception e){
+                                    json = advice.getReturnObj().toString();
+                                }
+                                methodTree.setOutData(json);
                                 // 添加数据到处理器
                                 dataProcessor.add(advice.getProcessTop().attachment());
                             }
