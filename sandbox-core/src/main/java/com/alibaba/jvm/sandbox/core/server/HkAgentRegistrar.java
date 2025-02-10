@@ -124,6 +124,7 @@ public class HkAgentRegistrar {
         registerRequest.setJvmInfo(getJVMInfo());
         registerRequest.setPort(((Integer)configure.getServerPort()).toString());
         registerRequest.setServerIp(configure.getServerIp());
+        registerRequest.setLaunchTime(ManagementFactory.getRuntimeMXBean().getStartTime());
         return registerRequest;
     }
 
