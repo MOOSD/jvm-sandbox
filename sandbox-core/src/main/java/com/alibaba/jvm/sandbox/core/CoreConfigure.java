@@ -60,11 +60,14 @@ public class CoreConfigure {
     private static final String KEY_MF_BUILD_TIME = "mf.build-time";
     private static final String KEY_MF_GIT_BRANCH = "mf.git-branch";
     private static final String KEY_MF_GIT_COMMIT_ID = "mf.git-commit-id";
-    private static final String KEY_MF_GIT_COMMIT_MESSAGE = "mf.git-commit-message";
+    private static final String KEY_MF_GIT_COMMIT_MESSAGE = "mf.git-commit-message-short";
     private static final String KEY_MF_GIT_COMMIT_TIME = "mf.git-commit-time";
     private static final String KEY_MF_GIT_REMOTE_URL = "mf.git-remote-url";
     private static final String KEY_GROUP_ID = "mf.group-id";
     private static final String KEY_ARTIFACT_ID = "mf.artifact-Id";
+    private static final String KEY_MF_GIT_TOTAL_COMMIT_COUNT = "mf.git-total-commit-count";
+    private static final String KEY_MF_GIT_COMMIT_USER_NAME = "mf.git-commit-user-name";
+    private static final String KEY_MF_GIT_CLOSEST_TAG_NAME = "mf.git-closest-tag-name";
 
     /**
      * 精准化专用的内容
@@ -464,6 +467,16 @@ public class CoreConfigure {
         return featureMap.get(KEY_ARTIFACT_ID);
     }
 
+    public String getGitTotalCommitCount(){
+        return featureMap.get(KEY_MF_GIT_TOTAL_COMMIT_COUNT);
+    }
+    public String getGitCommitUserName(){
+        return featureMap.get(KEY_MF_GIT_COMMIT_USER_NAME);
+    }
+
+    public String getGitClosestTagName(){
+        return featureMap.get(KEY_MF_GIT_CLOSEST_TAG_NAME);
+    }
 
     public String getHkServerIp() {
         return featureMap.get(KEY_HK_SERVER_IP);

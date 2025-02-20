@@ -36,10 +36,13 @@ public class AgentBoot {
         MF_KEY_MAP.put("mf.artifact-Id", "Artifact-Id");
         MF_KEY_MAP.put("mf.build-time", "Build-Time");
         MF_KEY_MAP.put("mf.git-branch", "Git-Branch");
+        MF_KEY_MAP.put("mf.git-closest-tag-name", "Git-Closest-Tag-Name");
         MF_KEY_MAP.put("mf.git-commit-id", "Git-Commit-Id");
-        MF_KEY_MAP.put("mf.git-commit-message", "Git-Commit-Message");
+        MF_KEY_MAP.put("mf.git-commit-message-short", "Git-Commit-Message-Short");
         MF_KEY_MAP.put("mf.git-commit-time", "Git-Commit-Time");
+        MF_KEY_MAP.put("mf.git-commit-user-name", "Git-Commit-User-Name");
         MF_KEY_MAP.put("mf.git-remote-url", "Git-Remote-Url");
+        MF_KEY_MAP.put("mf.git-total-commit-count", "Git-Total-Commit-Count");
 
     }
 

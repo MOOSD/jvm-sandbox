@@ -121,6 +121,10 @@ public class HkAgentRegistrar {
         registerRequest.setProjectBuildTime(configure.getBuildTime());
         registerRequest.setHealthCheckCycle(configure.getHkHealthCheckCycle());
         registerRequest.setHostName(configure.getHostName());
+        registerRequest.setRepoCommitTime(configure.getGitCommitTime());
+        registerRequest.setRepoCommitUserName(configure.getGitCommitUserName());
+        registerRequest.setRepoTotalCommitCount(configure.getGitTotalCommitCount());
+        registerRequest.setRepoClosestTagName(configure.getGitClosestTagName());
         registerRequest.setJvmInfo(getJVMInfo());
         registerRequest.setPort(((Integer)configure.getServerPort()).toString());
         registerRequest.setServerIp(configure.getServerIp());
